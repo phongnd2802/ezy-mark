@@ -1,0 +1,38 @@
+package layouts
+
+type AuthTitle string
+
+const (
+	SignUp    AuthTitle = "Sign Up"
+	SignIn    AuthTitle = "Sign In"
+	VerifyOTP AuthTitle = "Verify OTP"
+)
+
+templ Auth(title AuthTitle) {
+	@Base(string(title)) {
+		<div class="w-full flex bg-[#F2F4F7]">
+			<div class="w-[50%] h-screen flex flex-col justify-center">
+				<div class="flex px-16 mb-5 gap-x-2.5">
+					<img
+						class="w-[50px] h-[50px]"
+						src="/public/images/logo.png"
+						alt="Logo"
+					/>
+					<div class="h-[50px] flex items-center justify-center">
+						<h1 class="text-2xl font-bold">Daily Social</h1>
+					</div>
+				</div>
+				<div class="px-16">
+					<h2 class="text-4xl font-bold mb-2">Welcome to Daily Social</h2>
+					<p class="text-justify">
+						Daily Social is a platform that helps you stay connected with friends, keep up with the latest updates, and share your favorite moments.
+						Engage with your community, explore trending content, and create lasting memories—all in one place.
+					</p>
+				</div>
+			</div>
+			<div class="w-[50%]">
+				{ children... }
+			</div>
+		</div>
+	}
+}

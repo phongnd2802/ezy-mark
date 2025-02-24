@@ -1,0 +1,99 @@
+package auth
+
+import (
+	"github.com/phongnd2802/daily-social/pkg/icons"
+	"github.com/phongnd2802/daily-social/views/components"
+	"github.com/phongnd2802/daily-social/views/layouts"
+)
+
+templ SignIn() {
+	@layouts.Auth(layouts.SignIn) {
+		<div class="mx-10 h-screen flex items-center">
+			@components.Card(components.CardProps{Class: "w-full max-w-md bg-white rounded-xl shadow-lg"}) {
+				@components.CardHeader() {
+					@components.CardTitle() {
+						Login to continue
+					}
+					@components.CardDescription() {
+						Use your email or another service to continue
+					}
+				}
+				@components.CardContent() {
+					@LoginForm()
+					<div class="flex items-center gap-4 w-full mb-2.5">
+						<hr class="flex-grow border-t border-gray-400"/>
+						<span class="text-gray-500 text-sm font-medium">OR</span>
+						<hr class="flex-grow border-t border-gray-400"/>
+					</div>
+					<div class="flex flex-col gap-y-5">
+						@components.Button(components.ButtonProps{
+							Text:     "Continue with Github",
+							IconLeft: icons.Github(icons.IconProps{Size: "16"}),
+						})
+						@components.Button(components.ButtonProps{
+							Text:     "Continue with Google",
+							IconLeft: icons.Youtube(icons.IconProps{Size: "16"}),
+						})
+						<div class="w-full text-center">
+							<a href="" class="text-gray-400 hover:text-gray-500 transition duration-200">
+								Forgot password?
+							</a>
+						</div>
+						<div class="w-full text-center">
+							<span>
+								Don&apos;t have an account? 
+								<a
+									href={ templ.SafeURL("/signup") }
+									class="text-blue-500 hover:underline hover:text-blue-600 transition duration-200"
+								>
+									Sign up
+								</a>
+							</span>
+						</div>
+					</div>
+				}
+			}
+		</div>
+	}
+}
+
+templ LoginForm() {
+	<form action={ templ.SafeURL("/signin") } method="post" class="flex flex-col gap-y-2.5">
+		@components.FormItem(components.FormItemProps{}) {
+			@components.FormLabel(components.FormLabelProps{
+				Text: "Email",
+				For:  "email-form",
+			})
+			@components.Input(components.InputProps{
+				ID:          "email-form",
+				Type:        components.InputTypeEmail,
+				Name:        "email",
+				PlaceHolder: "example@gmail.com",
+				HasError:    false,
+			})
+			// @components.FormMessage(components.FormMessageProps{
+			// 	Message: "Please enter a valid email address",
+			// 	Type: components.ErrorMessage,
+			// })
+		}
+		@components.FormItem(components.FormItemProps{}) {
+			@components.FormLabel(components.FormLabelProps{
+				Text: "Password",
+				For:  "password-form",
+			})
+			@components.Input(components.InputProps{
+				ID:       "password-form",
+				Type:     components.InputTypePassword,
+				Name:     "password",
+				HasError: false,
+			})
+		}
+		@components.Button(components.ButtonProps{
+			Text:      "Continue",
+			FullWidth: true,
+			Type:      "submit",
+			Disabled:  false,
+			Class:     "my-2.5",
+		})
+	</form>
+}

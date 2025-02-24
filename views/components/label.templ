@@ -1,0 +1,39 @@
+package components
+
+type LabelProps struct {
+	ID            string
+	For           string
+	Text          string
+	Error         string
+	Class         string
+	DisabledClass string
+}
+
+templ LabelScript() {
+}
+
+templ Label(props LabelProps) {
+	<label
+		x-data="label"
+		id={ props.ID }
+		for={ props.For }
+		class={
+			// Styling
+			"text-sm font-medium leading-none",
+		
+			// Utility
+			templ.KV("text-destructive", len(props.Error) > 0),
+		
+			// Custom
+			props.Class,
+		}
+		if props.DisabledClass != "" {
+			data-disabled-style={ props.DisabledClass }
+		} else {
+			data-disabled-style="opacity-50 cursor-not-allowed"
+		}
+		x-bind:class="getClass"
+	>
+		{ props.Text }
+	</label>
+}

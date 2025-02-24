@@ -1,0 +1,109 @@
+package auth
+
+import (
+	"github.com/phongnd2802/daily-social/views/components"
+	"github.com/phongnd2802/daily-social/views/layouts"
+)
+
+templ SignUp(errMsg map[string]string) {
+	@layouts.Auth(layouts.SignUp) {
+		<div class="mx-10 h-screen flex items-center">
+			@components.Card(components.CardProps{Class: "w-full max-w-md bg-white rounded-xl shadow-lg"}) {
+				@components.CardHeader() {
+					@components.CardTitle() {
+						Sign up to continue
+					}
+					@components.CardDescription() {
+						Use your email or another service to continue
+					}
+				}
+				@components.CardContent() {
+					@SignUpForm(errMsg)
+					<div class="flex flex-col">
+						<div class="w-full text-center">
+							<span>
+								Already have an account?
+								<a
+									href={ templ.SafeURL("/signin") }
+									class="text-blue-500 hover:underline hover:text-blue-600 transition duration-200"
+								>
+									Log in
+								</a>
+							</span>
+						</div>
+					</div>
+				}
+			}
+		</div>
+	}
+}
+
+templ SignUpForm(errMsg map[string]string) {
+	{{
+		_, errPassword := errMsg["errPassword"]
+		_, errMatch := errMsg["errMatch"]
+	}}
+	<form action={ templ.SafeURL("/signup") } method="post" class="flex flex-col gap-y-2.5">
+		@components.FormItem(components.FormItemProps{}) {
+			@components.FormLabel(components.FormLabelProps{
+				Text: "Email",
+				For:  "email-form",
+			})
+			@components.Input(components.InputProps{
+				ID:          "email-form",
+				Type:        components.InputTypeEmail,
+				Name:        "email",
+				PlaceHolder: "example@gmail.com",
+				Required:    true,
+				HasError:    false,
+			})
+		}
+		@components.FormItem(components.FormItemProps{}) {
+			@components.FormLabel(components.FormLabelProps{
+				Text: "Password",
+				For:  "password-form",
+			})
+			@components.Input(components.InputProps{
+				ID:       "password-form",
+				Type:     components.InputTypePassword,
+				Name:     "password",
+				Required: true,
+				Value: errMsg["password"],
+				HasError: errPassword,
+			})
+			if errPassword {
+				@components.FormMessage(components.FormMessageProps{
+					Message: errMsg["errPassword"],
+					Type: components.ErrorMessage,
+				})
+			}
+		}
+		@components.FormItem(components.FormItemProps{}) {
+			@components.FormLabel(components.FormLabelProps{
+				Text: "Confirm Password",
+				For:  "confirm-password-form",
+			})
+			@components.Input(components.InputProps{
+				ID:       "confirm-password-form",
+				Type:     components.InputTypePassword,
+				Name:     "confirm_password",
+				Required: true,
+				Value: errMsg["match"],
+				HasError: errMatch,
+			})
+			if errMatch {
+				@components.FormMessage(components.FormMessageProps{
+					Message: errMsg["errMatch"],
+					Type: components.ErrorMessage,
+				})
+			}
+		}
+		@components.Button(components.ButtonProps{
+			Text:      "Continue",
+			FullWidth: true,
+			Type:      "submit",
+			Disabled:  false,
+			Class:     "my-2.5",
+		})
+	</form>
+}

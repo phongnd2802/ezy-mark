@@ -1,0 +1,91 @@
+package components
+
+import "fmt"
+
+type InputOTPProps struct {
+	SlotCount       int
+	InputNameHidden string
+}
+
+templ InputOTP(props InputOTPProps) {
+	<div x-data="inputOtp">
+		<div x-ref="inputOtpContainer" class="flex justify-center gap-2 p-4">
+			for i := 0; i < props.SlotCount; i++ {
+				@Slot(SLotProps{
+					Value: "",
+					Index: i,
+				})
+			}
+		</div>
+		@Input(InputProps{
+			Type: InputTypeHidden,
+			Name: props.InputNameHidden,
+			Attributes: templ.Attributes{
+				"x-model": "value",
+			},
+		})
+	</div>
+}
+
+type SLotProps struct {
+	Index int
+	Value string
+}
+
+templ Slot(props SLotProps) {
+	@Input(InputProps{
+		Class: "otpInput w-12 h-12 text-xl font-bold text-center border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all",
+		Type:  InputTypeTel,
+		Attributes: templ.Attributes{
+			"maxlength":          "1",
+			"@input":             fmt.Sprintf("handleInput($event, %d)", props.Index),
+			"@keydown.backspace": fmt.Sprintf("handleBackspace($event, %d)", props.Index),
+		},
+	})
+}
+
+templ InputOTPScript() {
+	{{ handler := templ.NewOnceHandle() }}
+	@handler.Once() {
+		<script defer nonce={ templ.GetNonce(ctx) }>
+            
+            document.addEventListener('alpine:init', () => {
+                
+                Alpine.data('inputOtp', () => ({
+                    value: "",
+                    get inputs() {
+                        return this.$refs.inputOtpContainer.querySelectorAll('.otpInput');
+                    },
+                    handleInput(event, index) {
+                    
+                        this.updateOtpValue();
+                        if (event.target.value) {
+                            const nextInput = this.inputs[index + 1];
+                            if (nextInput) {
+                                nextInput.focus();
+                                nextInput.select();
+                            }
+                        }
+                    },
+
+                    handleBackspace(event, index) {
+                        if (event.target.value) {
+                            event.target.value = "";
+                        } else if (index > 0) {
+                            this.inputs[index - 1].focus();
+                            this.inputs[index - 1].select();
+                        }
+
+                        this.updateOtpValue();
+                    },
+
+                    updateOtpValue() {
+                        this.value = [...this.inputs].map(input => input.value).join('');
+                        console.log("OTP is:", this.value);
+                    },
+                }));
+
+            })
+        </script>
+	}
+}

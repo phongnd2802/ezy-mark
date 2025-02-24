@@ -1,0 +1,103 @@
+package auth
+
+import (
+	"github.com/phongnd2802/daily-social/views/components"
+	"github.com/phongnd2802/daily-social/views/layouts"
+	"strconv"
+)
+
+templ VerifyOTP() {
+	@layouts.Auth(layouts.VerifyOTP) {
+		<div class="mx-10 h-screen flex items-center">
+			@components.Card(components.CardProps{Class: "w-full max-w-md bg-white rounded-xl shadow-lg"}) {
+				@components.CardHeader() {
+					@components.CardTitle() {
+						Verify OTP - Complete your registration
+					}
+					@components.CardDescription() {
+						Enter the OTP sent to your email to verify your identity and complete the registration process.
+					}
+				}
+				@components.CardContent() {
+					@VerifyOTPForm()
+					<div class="flex items-center gap-4 w-full mb-2.5">
+						<hr class="flex-grow border-t border-gray-400"/>
+					</div>
+					<div
+						data-duration={ strconv.Itoa(60) }
+						x-data="countDown"
+						class="flex items-center"
+					>
+						<p class="text-sm text-muted-foreground text-justify mr-0.5">
+							The OTP will expire in 
+							<span class="text-red-500 font-semibold" x-text="timeLeft"></span> seconds.
+						</p>
+						@components.Button(components.ButtonProps{
+                            Variant: components.ButtonVariantLink,
+                            Text: "Resend",
+                            Class: "px-0 py-0 text-blue-500 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none",
+                            Attributes: templ.Attributes{
+                                ":disabled": "timeLeft > 0",
+                            },
+                        })
+					</div>
+				}
+			}
+		</div>
+	}
+	@components.InputOTPScript()
+    @CountDownScript()
+}
+
+templ VerifyOTPForm() {
+	<form action="">
+		@components.InputOTP(components.InputOTPProps{
+			SlotCount:       6,
+			InputNameHidden: "otp",
+		})
+		@components.Button(components.ButtonProps{
+			FullWidth: true,
+			Text:      "Continue",
+			Class:     "my-2.5",
+			Type:      "submit",
+			Disabled:  true,
+		})
+	</form>
+}
+
+templ CountDownScript() {
+	{{ handler := templ.NewOnceHandle() }}
+	@handler.Once() {
+		<script defer nonce={ templ.GetNonce(ctx) }>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('countDown', () => ({
+                    timeLeft: 0,
+                    intervalId: null,
+
+                    init() {
+                        this.timeLeft = parseInt(this.$el.dataset.duration || 0);
+                        this.startTimer();
+                    },
+
+                    startTimer() {
+                        if (this.timeLeft <= 0) return;
+
+                        this.intervalId = setInterval(() => {
+                            if (this.timeLeft > 0) {
+                                this.timeLeft--;
+                            } else {
+                                clearInterval(this.intervalId);
+                            }
+                        }, 1000);
+                    },
+
+                    destroy() {
+                        if (this.intervalId) {
+                            clearInterval(this.intervalId);
+                        }
+                    },
+                }))
+            })
+        </script>
+	}
+}
