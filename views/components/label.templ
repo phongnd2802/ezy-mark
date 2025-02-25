@@ -14,7 +14,6 @@ templ LabelScript() {
 
 templ Label(props LabelProps) {
 	<label
-		x-data="label"
 		id={ props.ID }
 		for={ props.For }
 		class={
@@ -32,7 +31,6 @@ templ Label(props LabelProps) {
 		} else {
 			data-disabled-style="opacity-50 cursor-not-allowed"
 		}
-		x-bind:class="getClass"
 	>
 		{ props.Text }
 	</label>

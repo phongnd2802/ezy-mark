@@ -14,7 +14,13 @@ import (
 	"strconv"
 )
 
-func VerifyOTP() templ.Component {
+type VerifyOTPViewProps struct {
+	Errors map[string]string
+	Token  string
+	TTL    int
+}
+
+func VerifyOTP(props VerifyOTPViewProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -145,7 +151,7 @@ func VerifyOTP() templ.Component {
 						}()
 					}
 					ctx = templ.InitializeContext(ctx)
-					templ_7745c5c3_Err = VerifyOTPForm().Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = VerifyOTPForm(props).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -154,9 +160,9 @@ func VerifyOTP() templ.Component {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var8 string
-					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(60))
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(props.TTL))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/auth/verify_otp.templ`, Line: 27, Col: 38}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/auth/verify_otp.templ`, Line: 33, Col: 45}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -215,7 +221,7 @@ func VerifyOTP() templ.Component {
 	})
 }
 
-func VerifyOTPForm() templ.Component {
+func VerifyOTPForm(props VerifyOTPViewProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -236,7 +242,17 @@ func VerifyOTPForm() templ.Component {
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<form action=\"\">")
+		_, errOtp := props.Errors["errOtp"]
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<form action=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 templ.SafeURL = templ.SafeURL("/verify-otp")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var10)))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" method=\"post\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -247,17 +263,41 @@ func VerifyOTPForm() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = components.Input(components.InputProps{
+			Type:  components.InputTypeHidden,
+			Name:  "token",
+			Value: props.Token,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if errOtp {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"w-full flex justify-center items-center\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.FormMessage(components.FormMessageProps{
+				Type:    components.ErrorMessage,
+				Message: props.Errors["errOtp"],
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		templ_7745c5c3_Err = components.Button(components.ButtonProps{
 			FullWidth: true,
 			Text:      "Continue",
 			Class:     "my-2.5",
 			Type:      "submit",
-			Disabled:  true,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -281,13 +321,13 @@ func CountDownScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		handler := templ.NewOnceHandle()
-		templ_7745c5c3_Var11 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var12 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -299,26 +339,26 @@ func CountDownScript() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script defer nonce=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<script defer nonce=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.GetNonce(ctx))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/auth/verify_otp.templ`, Line: 71, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/pages/auth/verify_otp.templ`, Line: 90, Col: 43}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\">\r\n            document.addEventListener('alpine:init', () => {\r\n                Alpine.data('countDown', () => ({\r\n                    timeLeft: 0,\r\n                    intervalId: null,\r\n\r\n                    init() {\r\n                        this.timeLeft = parseInt(this.$el.dataset.duration || 0);\r\n                        this.startTimer();\r\n                    },\r\n\r\n                    startTimer() {\r\n                        if (this.timeLeft <= 0) return;\r\n\r\n                        this.intervalId = setInterval(() => {\r\n                            if (this.timeLeft > 0) {\r\n                                this.timeLeft--;\r\n                            } else {\r\n                                clearInterval(this.intervalId);\r\n                            }\r\n                        }, 1000);\r\n                    },\r\n\r\n                    destroy() {\r\n                        if (this.intervalId) {\r\n                            clearInterval(this.intervalId);\r\n                        }\r\n                    },\r\n                }))\r\n            })\r\n        </script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">\r\n            document.addEventListener('alpine:init', () => {\r\n                Alpine.data('countDown', () => ({\r\n                    timeLeft: 0,\r\n                    intervalId: null,\r\n\r\n                    init() {\r\n                        this.timeLeft = parseInt(this.$el.dataset.duration || 0);\r\n                        this.startTimer();\r\n                    },\r\n\r\n                    startTimer() {\r\n                        if (this.timeLeft <= 0) return;\r\n\r\n                        this.intervalId = setInterval(() => {\r\n                            if (this.timeLeft > 0) {\r\n                                this.timeLeft--;\r\n                            } else {\r\n                                clearInterval(this.intervalId);\r\n                            }\r\n                        }, 1000);\r\n                    },\r\n\r\n                    destroy() {\r\n                        if (this.intervalId) {\r\n                            clearInterval(this.intervalId);\r\n                        }\r\n                    },\r\n                }))\r\n            })\r\n        </script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = handler.Once().Render(templ.WithChildren(ctx, templ_7745c5c3_Var11), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = handler.Once().Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

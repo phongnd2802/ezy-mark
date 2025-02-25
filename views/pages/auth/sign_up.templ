@@ -35,6 +35,8 @@ templ SignUp(errMsg map[string]string) {
 				}
 			}
 		</div>
+
+		@components.ToastScript()
 	}
 }
 
@@ -42,6 +44,7 @@ templ SignUpForm(errMsg map[string]string) {
 	{{
 		_, errPassword := errMsg["errPassword"]
 		_, errMatch := errMsg["errMatch"]
+		_, errEmailExists := errMsg["errEmailExists"]
 	}}
 	<form action={ templ.SafeURL("/signup") } method="post" class="flex flex-col gap-y-2.5">
 		@components.FormItem(components.FormItemProps{}) {
@@ -55,8 +58,15 @@ templ SignUpForm(errMsg map[string]string) {
 				Name:        "email",
 				PlaceHolder: "example@gmail.com",
 				Required:    true,
-				HasError:    false,
+				HasError:    errEmailExists,
+				Value: errMsg["email"],
 			})
+			if errEmailExists {
+				@components.FormMessage(components.FormMessageProps{
+					Message: errMsg["errEmailExists"],
+					Type:    components.ErrorMessage,
+				})
+			}
 		}
 		@components.FormItem(components.FormItemProps{}) {
 			@components.FormLabel(components.FormLabelProps{
@@ -68,13 +78,13 @@ templ SignUpForm(errMsg map[string]string) {
 				Type:     components.InputTypePassword,
 				Name:     "password",
 				Required: true,
-				Value: errMsg["password"],
+				Value:    errMsg["password"],
 				HasError: errPassword,
 			})
 			if errPassword {
 				@components.FormMessage(components.FormMessageProps{
 					Message: errMsg["errPassword"],
-					Type: components.ErrorMessage,
+					Type:    components.ErrorMessage,
 				})
 			}
 		}
@@ -88,13 +98,13 @@ templ SignUpForm(errMsg map[string]string) {
 				Type:     components.InputTypePassword,
 				Name:     "confirm_password",
 				Required: true,
-				Value: errMsg["match"],
+				Value:    errMsg["match"],
 				HasError: errMatch,
 			})
 			if errMatch {
 				@components.FormMessage(components.FormMessageProps{
 					Message: errMsg["errMatch"],
-					Type: components.ErrorMessage,
+					Type:    components.ErrorMessage,
 				})
 			}
 		}

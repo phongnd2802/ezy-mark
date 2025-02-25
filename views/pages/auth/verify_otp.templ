@@ -6,7 +6,13 @@ import (
 	"strconv"
 )
 
-templ VerifyOTP() {
+type VerifyOTPViewProps struct {
+	Errors map[string]string
+	Token  string
+	TTL    int
+}
+
+templ VerifyOTP(props VerifyOTPViewProps) {
 	@layouts.Auth(layouts.VerifyOTP) {
 		<div class="mx-10 h-screen flex items-center">
 			@components.Card(components.CardProps{Class: "w-full max-w-md bg-white rounded-xl shadow-lg"}) {
@@ -19,12 +25,12 @@ templ VerifyOTP() {
 					}
 				}
 				@components.CardContent() {
-					@VerifyOTPForm()
+					@VerifyOTPForm(props)
 					<div class="flex items-center gap-4 w-full mb-2.5">
 						<hr class="flex-grow border-t border-gray-400"/>
 					</div>
 					<div
-						data-duration={ strconv.Itoa(60) }
+						data-duration={ strconv.Itoa(props.TTL) }
 						x-data="countDown"
 						class="flex items-center"
 					>
@@ -33,34 +39,47 @@ templ VerifyOTP() {
 							<span class="text-red-500 font-semibold" x-text="timeLeft"></span> seconds.
 						</p>
 						@components.Button(components.ButtonProps{
-                            Variant: components.ButtonVariantLink,
-                            Text: "Resend",
-                            Class: "px-0 py-0 text-blue-500 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none",
-                            Attributes: templ.Attributes{
-                                ":disabled": "timeLeft > 0",
-                            },
-                        })
+							Variant: components.ButtonVariantLink,
+							Text:    "Resend",
+							Class:   "px-0 py-0 text-blue-500 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none",
+							Attributes: templ.Attributes{
+								":disabled": "timeLeft > 0",
+							},
+						})
 					</div>
 				}
 			}
 		</div>
 	}
 	@components.InputOTPScript()
-    @CountDownScript()
+	@CountDownScript()
 }
 
-templ VerifyOTPForm() {
-	<form action="">
+templ VerifyOTPForm(props VerifyOTPViewProps) {
+	{{ _, errOtp := props.Errors["errOtp"] }}
+	<form action={ templ.SafeURL("/verify-otp") } method="post">
 		@components.InputOTP(components.InputOTPProps{
 			SlotCount:       6,
 			InputNameHidden: "otp",
 		})
+		@components.Input(components.InputProps{
+			Type:  components.InputTypeHidden,
+			Name:  "token",
+			Value: props.Token,
+		})
+		if errOtp {
+			<div class="w-full flex justify-center items-center">
+				@components.FormMessage(components.FormMessageProps{
+					Type:    components.ErrorMessage,
+					Message: props.Errors["errOtp"],
+				})
+			</div>
+		}
 		@components.Button(components.ButtonProps{
 			FullWidth: true,
 			Text:      "Continue",
 			Class:     "my-2.5",
 			Type:      "submit",
-			Disabled:  true,
 		})
 	</form>
 }
