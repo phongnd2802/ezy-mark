@@ -46,7 +46,11 @@ create-migration:
 	set GOOSE_DBSTRING=$(GOOSE_DBSTRING)
 	goose -dir=$(GOOSE_MIGRATION_DIR) -s create $(name) sql
 
-reset: migrate-down migrate-up sqlc
+
+flush:
+	docker exec -it redis-db redis-cli flushall
+
+reset: flush migrate-down migrate-up sqlc
 
 redis: 
 	docker run --name redis-db --network daily-social-network  -p 6380:6379 -d redis:7-alpine
@@ -54,4 +58,4 @@ redis:
 sqlc:
 	sqlc generate
 
-.PHONY: server templ css icons dev network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
+.PHONY: flush server templ css icons dev network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis

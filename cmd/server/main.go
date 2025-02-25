@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/sessions"
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
@@ -19,6 +20,8 @@ import (
 	"github.com/phongnd2802/daily-social/internal/cache"
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/handlers"
+	"github.com/phongnd2802/daily-social/internal/worker"
+	"github.com/phongnd2802/daily-social/pkg/email"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -69,10 +72,22 @@ func main() {
 
 	log.Println("Connected Redis Success")
 
+	redisOpt := asynq.RedisClientOpt{
+		Addr: os.Getenv("REDIS_ADDR"),
+	}
+
 	store := db.NewStore(connPool)
 	cache := cache.NewRedisClient(client)
+	distributor := worker.NewRedisTaskDistributor(redisOpt)
+	sender := email.NewGmailSender(
+		os.Getenv("SENDER_NAME"),
+		os.Getenv("SENDER_EMAIL"), 
+		os.Getenv("SENDER_PASSWORD"),
+	)
 
-	handler := handlers.NewHandler(store, cache)
+	go runTaskProcessor(redisOpt, sender)
+
+	handler := handlers.NewHandler(store, cache, distributor)
 	e := echo.New()
 	e.HTTPErrorHandler = customHTTPErrorHandler
 
@@ -128,4 +143,13 @@ func main() {
 	}
 
 	fmt.Println("Server gracefully stopped")
+}
+
+
+func runTaskProcessor(reditOpt asynq.RedisClientOpt, sender email.EmailSender) {
+	taskProcessor := worker.NewRedisTaskProcessor(reditOpt, sender)
+	log.Println("Start Task Processor")
+	if err := taskProcessor.Start(); err != nil {
+		log.Fatal("failed to start task processor")
+	}
 }

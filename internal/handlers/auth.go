@@ -6,13 +6,16 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/phongnd2802/daily-social/internal/cache"
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/dtos"
+	"github.com/phongnd2802/daily-social/internal/worker"
 	"github.com/phongnd2802/daily-social/pkg/crypto"
 	"github.com/phongnd2802/daily-social/pkg/random"
 	"github.com/phongnd2802/daily-social/views/pages"
@@ -27,7 +30,7 @@ const (
 func (h *Handler) HandleLogin(c echo.Context) error {
 	method := c.Request().Method
 	if method == echo.GET {
-		return render(c, auth.SignIn())
+		return render(c, auth.SignIn(auth.SignInViewProps{}))
 	}
 
 	params := new(dtos.LoginRequest)
@@ -37,9 +40,36 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 
 	slog.Info("Params", "email", params.Email, "password", params.Password)
 
-	return render(c, auth.SignIn())
+	errs := make(map[string]string)
+	// Check Email
+	userFound, err := h.store.GetUserBaseByEmail(c.Request().Context(), params.Email)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			errs["errLogin"] = "The Email or password is incorrect!"
+			return render(c, auth.SignIn(auth.SignInViewProps{
+				Errors: errs,
+			}))
+		}
+		return err
+	}
+	match := crypto.VerifyPassword(params.Password, userFound.UserPassword)
+	if !match {
+		errs["errLogin"] = "The Email or password is incorrect!"
+		return render(c, auth.SignIn(auth.SignInViewProps{
+			Errors: errs,
+		}))
+	}
+
+	// Generate Token
+
+	return render(c, auth.SignIn(auth.SignInViewProps{}))
 }
 
+// /////////////////////////////////////////
+// /										///
+// /				Register			   ///
+// /									  ///
+// /////////////////////////////////////////
 func (h *Handler) HandleRegister(c echo.Context) error {
 	method := c.Request().Method
 	if method == echo.GET {
@@ -155,8 +185,20 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 		return err
 	}
 	// Send Otp to email
-	log.Println("Sent OTP to email")
-
+	log.Println("Sending OTP to email")
+	payload := &worker.PayloadSendVerifyEmail{
+		Email: newUser.UserEmail,
+		Otp:   strconv.Itoa(newOtp),
+	}
+	opts := []asynq.Option{
+		asynq.MaxRetry(5),
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(worker.QueueCritical),
+	}
+	err = h.distributor.DistributeTaskSendVerifyEmail(c.Request().Context(), payload, opts...)
+	if err != nil {
+		return err
+	}
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/verify-otp?token=%s", hashUserEmail))
 }
 
@@ -182,8 +224,8 @@ func (h *Handler) HandleVerifyOTP(c echo.Context) error {
 		sess.Save(c.Request(), c.Response())
 
 		return render(c, auth.VerifyOTP(auth.VerifyOTPViewProps{
-			TTL: int(ttl.Seconds()), 
-			Token: token,
+			TTL:    int(ttl.Seconds()),
+			Token:  token,
 			Errors: map[string]string{"errOtp": errMsg},
 		}))
 	}

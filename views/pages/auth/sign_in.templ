@@ -6,7 +6,11 @@ import (
 	"github.com/phongnd2802/daily-social/views/layouts"
 )
 
-templ SignIn() {
+type SignInViewProps struct {
+	Errors map[string]string
+}
+
+templ SignIn(props SignInViewProps) {
 	@layouts.Auth(layouts.SignIn) {
 		<div class="mx-10 h-screen flex items-center">
 			@components.Card(components.CardProps{Class: "w-full max-w-md bg-white rounded-xl shadow-lg"}) {
@@ -19,7 +23,7 @@ templ SignIn() {
 					}
 				}
 				@components.CardContent() {
-					@LoginForm()
+					@LoginForm(props)
 					<div class="flex items-center gap-4 w-full mb-2.5">
 						<hr class="flex-grow border-t border-gray-400"/>
 						<span class="text-gray-500 text-sm font-medium">OR</span>
@@ -57,7 +61,8 @@ templ SignIn() {
 	}
 }
 
-templ LoginForm() {
+templ LoginForm(props SignInViewProps) {
+	{{ errLogin, exists := props.Errors["errLogin"] }}
 	<form action={ templ.SafeURL("/signin") } method="post" class="flex flex-col gap-y-2.5">
 		@components.FormItem(components.FormItemProps{}) {
 			@components.FormLabel(components.FormLabelProps{
@@ -71,10 +76,6 @@ templ LoginForm() {
 				PlaceHolder: "example@gmail.com",
 				HasError:    false,
 			})
-			// @components.FormMessage(components.FormMessageProps{
-			// 	Message: "Please enter a valid email address",
-			// 	Type: components.ErrorMessage,
-			// })
 		}
 		@components.FormItem(components.FormItemProps{}) {
 			@components.FormLabel(components.FormLabelProps{
@@ -87,6 +88,14 @@ templ LoginForm() {
 				Name:     "password",
 				HasError: false,
 			})
+		}
+		if exists {
+			<div class="w-full flex justify-center items-center">
+				@components.FormMessage(components.FormMessageProps{
+					Type:    components.ErrorMessage,
+					Message: errLogin,
+				})
+			</div>
 		}
 		@components.Button(components.ButtonProps{
 			Text:      "Continue",
