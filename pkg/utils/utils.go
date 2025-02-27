@@ -4,9 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"strconv"
+	"strings"
 
 	twmerge "github.com/Oudwins/tailwind-merge-go"
 	"github.com/a-h/templ"
+	"github.com/google/uuid"
 )
 
 // TwMerge combines Tailwind classes and handles conflicts
@@ -14,7 +17,6 @@ import (
 func TwMerge(classes ...string) string {
 	return twmerge.Merge(classes...)
 }
-
 
 // TwIf returns a class if a condition is true, otherwise an empty string
 // Ex: "bg-green-500", true -> "bg-green-500", false -> ""
@@ -37,7 +39,6 @@ func MergeAttributes(attrs ...templ.Attributes) templ.Attributes {
 	return merged
 }
 
-
 func GenerateNonce() (string, error) {
 	nonceBytes := make([]byte, 16)
 	_, err := rand.Read(nonceBytes)
@@ -46,4 +47,12 @@ func GenerateNonce() (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(nonceBytes), nil
+}
+
+func GenerateCliTokenUUID(userId int64) string {
+	newUUID := uuid.New()
+	// convert UUID to string, remove -
+	uuidString := strings.ReplaceAll((newUUID).String(), "", "")
+	// 10clitokenijkasdmfasikdjfpomgasdfgl,masdl;gmsdfpgk
+	return strconv.FormatInt(userId, 10) + "clitoken" + uuidString
 }

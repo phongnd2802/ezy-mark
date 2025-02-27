@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,23 +12,25 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/phongnd2802/daily-social/internal/cache"
+	"github.com/phongnd2802/daily-social/internal/config"
 	"github.com/phongnd2802/daily-social/internal/db"
+	"github.com/phongnd2802/daily-social/internal/global"
 	"github.com/phongnd2802/daily-social/internal/handlers"
 	"github.com/phongnd2802/daily-social/internal/worker"
 	"github.com/phongnd2802/daily-social/pkg/email"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func customHTTPErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {
 		return
 	}
-
 	code := http.StatusInternalServerError
 	if he, ok := err.(*echo.HTTPError); ok {
 		code = he.Code
@@ -42,47 +43,59 @@ func customHTTPErrorHandler(err error, c echo.Context) {
 }
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loding .env file")
+	config, err := config.LoadConfig(".env")
+	if err != nil {
+		panic(err)
 	}
 
-	connPool, err := pgxpool.New(context.Background(), os.Getenv("DB_SOURCE"))
-	if err != nil {
-		log.Fatalf("unable to connect database %v", err)
+	if config.Mode == "development" {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
+
+	connPool, err := pgxpool.New(context.Background(), config.DBSource)
+	if err != nil {
+		log.Fatal().Msgf("unable to connect database %v", err)
+	}
+	defer connPool.Close()
 
 	err = connPool.Ping(context.Background())
 	if err != nil {
-		log.Fatalf("failed ping database %v", err)
+		log.Fatal().Msgf("failed ping database %v", err)
 	}
 
-	log.Println("Connected Database Success")
+	log.Info().Msg("Connected Database Success")
+
+	global.ConnPool = connPool
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
+		Addr:     config.RedisAddr,
 		Password: "",
 		DB:       0,
 		PoolSize: 10,
 	})
+
+	defer client.Close()
 
 	err = client.Ping(context.Background()).Err()
 	if err != nil {
 		panic(err)
 	}
 
-	log.Println("Connected Redis Success")
+	log.Info().Msg("Connected Redis Success")
+
+	global.Rdb = client
 
 	redisOpt := asynq.RedisClientOpt{
-		Addr: os.Getenv("REDIS_ADDR"),
+		Addr: config.RedisAddr,
 	}
 
-	store := db.NewStore(connPool)
-	cache := cache.NewRedisClient(client)
+	store := db.NewStore()
+	cache := cache.NewRedisClient()
 	distributor := worker.NewRedisTaskDistributor(redisOpt)
 	sender := email.NewGmailSender(
-		os.Getenv("SENDER_NAME"),
-		os.Getenv("SENDER_EMAIL"), 
-		os.Getenv("SENDER_PASSWORD"),
+		config.SenderName,
+		config.SenderEmail,
+		config.SenderPassword,
 	)
 
 	go runTaskProcessor(redisOpt, sender)
@@ -94,7 +107,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.Secure())
 	e.Use(middleware.RequestID())
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))))
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(config.SessionSecret))))
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Decompress())
 	e.Static("/public", "public")
@@ -145,11 +158,10 @@ func main() {
 	fmt.Println("Server gracefully stopped")
 }
 
-
 func runTaskProcessor(reditOpt asynq.RedisClientOpt, sender email.EmailSender) {
 	taskProcessor := worker.NewRedisTaskProcessor(reditOpt, sender)
-	log.Println("Start Task Processor")
+	log.Info().Msg("Start Task Processor")
 	if err := taskProcessor.Start(); err != nil {
-		log.Fatal("failed to start task processor")
+		log.Fatal().Msg("failed to start task processor")
 	}
 }

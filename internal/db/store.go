@@ -1,6 +1,9 @@
 package db
 
-import "github.com/jackc/pgx/v5/pgxpool"
+import (
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/phongnd2802/daily-social/internal/global"
+)
 
 type Store interface {
 	Querier
@@ -11,9 +14,9 @@ type sqlStore struct {
 	connPool *pgxpool.Pool
 }
 
-func NewStore(connPool *pgxpool.Pool) Store {
+func NewStore() Store {
 	return &sqlStore{
-		connPool: connPool,
-		Queries: New(connPool),
+		connPool: global.ConnPool,
+		Queries: New(global.ConnPool),
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/phongnd2802/daily-social/internal/global"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -13,10 +14,16 @@ type Cache interface {
 	SetEx(ctx context.Context, key string, value interface{}, expirationTimeSecond int64) error
 	TTL(ctx context.Context, key string) (time.Duration, error)
 	Del(ctx context.Context, keys ...string) error
+	Exists(ctx context.Context, keys ...string) (int64, error)
 }
 
 type redisCache struct {
 	client *redis.Client
+}
+
+// Exists implements Cache.
+func (r *redisCache) Exists(ctx context.Context, keys ...string) (int64, error) {
+	return r.client.Exists(ctx, keys...).Result()
 }
 
 // Del implements Cache.
@@ -44,8 +51,8 @@ func (r *redisCache) Set(ctx context.Context, key string, value interface{}) err
 	return r.client.Set(ctx, key, value, 0).Err()
 }
 
-func NewRedisClient(client *redis.Client) Cache {
+func NewRedisClient() Cache {
 	return &redisCache{
-		client: client,
+		client: global.Rdb,
 	}
 }

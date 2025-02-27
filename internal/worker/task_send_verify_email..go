@@ -45,16 +45,16 @@ func (processor *redisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 	}
 
 	// Send Email
-	subject := "Welcome to Simple Bank Service"
-	content := fmt.Sprintf(`Hello,<br/> 
-	Thank you for registering with us!<br/>
-	OTP is <strong> %s </strong>`, payload.Otp)
+	// subject := "Welcome to Simple Bank Service"
+	// content := fmt.Sprintf(`Hello,<br/> 
+	// Thank you for registering with us!<br/>
+	// OTP is <strong> %s </strong>`, payload.Otp)
 
-	to := []string{payload.Email}
-	err := processor.sender.SendEmail(subject, content, to, nil, nil, nil)
-	if err != nil {
-		return fmt.Errorf("failed to send otp email: %w", err)
-	}
+	// to := []string{payload.Email}
+	// err := processor.sender.SendEmail(subject, content, to, nil, nil, nil)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to send otp email: %w", err)
+	// }
 
 	slog.Info("Processed Task", "type", task.Type(), "payload", task.Payload())
 	return nil

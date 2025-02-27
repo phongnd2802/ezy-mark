@@ -8,8 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
-
 func extractNameFromEmail(email string) string {
 	parts := strings.Split(email, "@")
 	if len(parts) > 1 {

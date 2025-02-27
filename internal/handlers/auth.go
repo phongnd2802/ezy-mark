@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,9 +16,12 @@ import (
 	"github.com/phongnd2802/daily-social/internal/worker"
 	"github.com/phongnd2802/daily-social/pkg/crypto"
 	"github.com/phongnd2802/daily-social/pkg/random"
+	"github.com/phongnd2802/daily-social/pkg/token"
+	"github.com/phongnd2802/daily-social/pkg/utils"
 	"github.com/phongnd2802/daily-social/views/pages"
 	"github.com/phongnd2802/daily-social/views/pages/auth"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -38,14 +39,12 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	slog.Info("Params", "email", params.Email, "password", params.Password)
-
 	errs := make(map[string]string)
 	// Check Email
 	userFound, err := h.store.GetUserBaseByEmail(c.Request().Context(), params.Email)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			errs["errLogin"] = "The Email or password is incorrect!"
+			errs["errLogin"] = "The email or password is incorrect!"
 			return render(c, auth.SignIn(auth.SignInViewProps{
 				Errors: errs,
 			}))
@@ -54,15 +53,47 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 	}
 	match := crypto.VerifyPassword(params.Password, userFound.UserPassword)
 	if !match {
-		errs["errLogin"] = "The Email or password is incorrect!"
+		errs["errLogin"] = "The email or password is incorrect!"
 		return render(c, auth.SignIn(auth.SignInViewProps{
 			Errors: errs,
 		}))
 	}
 
 	// Generate Token
+	subToken := utils.GenerateCliTokenUUID(userFound.UserID)
+	log.Info().Str("subToken", subToken).Msg("Generate Token")
 
-	return render(c, auth.SignIn(auth.SignInViewProps{}))
+	accessToken, err := token.CreateToken(subToken, "1h")
+	if err != nil {
+		return err
+	}
+	
+	refreshToken, err := token.CreateToken(subToken, "168h")
+	if err != nil {
+		return err
+	}
+
+	c.SetCookie(&http.Cookie{
+		Name: "access-token",
+		Value: accessToken,
+		HttpOnly: true,
+		Secure: false,
+		SameSite: http.SameSiteLaxMode,
+		Path: "/",
+		Expires: time.Now().Add(1 * time.Hour),
+	})
+
+	c.SetCookie(&http.Cookie{
+		Name: "refresh-token",
+		Value: refreshToken,
+		HttpOnly: true,
+		Secure: false,
+		SameSite: http.SameSiteLaxMode,
+		Path: "/",
+		Expires: time.Now().Add(7 * 24 * time.Hour),
+	})
+
+	return c.Redirect(http.StatusSeeOther, "/")
 }
 
 // /////////////////////////////////////////
@@ -123,7 +154,7 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 			// Generate OTP
 			newOtp := random.GenerateSixDigitOtp()
 
-			log.Println(">>>> OTP is:", newOtp)
+			log.Debug().Msgf(">>>> OTP is: %d", newOtp)
 
 			userKey := getUserKeyOtp(hashUserEmail)
 			err = h.cache.SetEx(c.Request().Context(), userKey, newOtp, OTP_EXPIRATION)
@@ -137,7 +168,7 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 				return err
 			}
 			// Send Otp to email
-			log.Println("Sent OTP to email")
+			log.Info().Msg("Sending OTP to email")
 
 			return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/verify-otp?token=%s", hashUserEmail))
 		}
@@ -157,7 +188,7 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 	// Generate OTP
 	newOtp := random.GenerateSixDigitOtp()
 
-	log.Println(">>>> OTP is:", newOtp)
+	log.Info().Msgf(">>>> OTP is: %d", newOtp)
 
 	// Insert UserBase
 	newUser, err := h.store.CreateUserBase(c.Request().Context(), db.CreateUserBaseParams{
@@ -169,8 +200,6 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(newUser.CreatedAt)
 
 	// Store Otp to redis
 	userKey := getUserKeyOtp(hashUserEmail)
@@ -185,7 +214,7 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 		return err
 	}
 	// Send Otp to email
-	log.Println("Sending OTP to email")
+	log.Info().Msg("Sending OTP to email")
 	payload := &worker.PayloadSendVerifyEmail{
 		Email: newUser.UserEmail,
 		Otp:   strconv.Itoa(newOtp),

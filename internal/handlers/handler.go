@@ -7,15 +7,15 @@ import (
 )
 
 type Handler struct {
-	store db.Store
-	cache cache.Cache
+	store       db.Store
+	cache       cache.Cache
 	distributor worker.TaskDistributor
 }
 
 func NewHandler(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *Handler {
 	return &Handler{
-		store: store,
-		cache: cache,
+		store:       store,
+		cache:       cache,
 		distributor: distributor,
 	}
 }

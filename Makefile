@@ -2,6 +2,9 @@ GOOSE_DBSTRING ?= "user=root password=secret host=127.0.0.1 port=5555 dbname=dai
 GOOSE_MIGRATION_DIR ?= internal/db/migrations
 GOOSE_DRIVER ?= postgres
 
+api:
+	@go run cmd/api/main.go
+
 server:
 	@air
 
@@ -14,8 +17,6 @@ css:
 icons:
 	@go run cmd/icongen/main.go
 
-dev:
-	make -j3 templ server css
 
 network:
 	docker network create daily-social-network
@@ -58,4 +59,4 @@ redis:
 sqlc:
 	sqlc generate
 
-.PHONY: flush server templ css icons dev network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
+.PHONY: api flush server templ css icons network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis

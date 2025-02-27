@@ -40,6 +40,7 @@ func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, sender email.EmailSend
 		ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
 			slog.Info("process task failed", "type", task.Type(), "payload", task.Payload(), "error", err.Error())
 		}),
+		Logger: NewLogger(),
 	})
 
 	return &redisTaskProcessor{
