@@ -20,6 +20,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -82,6 +83,12 @@ func main() {
 
 	go runTaskProcessor(redisOpt, sender)
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:3000",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Content-Type, Authorization",
+		AllowCredentials: true,
+	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return response.SuccessResponse(c, response.ErrCodeSuccess, "Success")

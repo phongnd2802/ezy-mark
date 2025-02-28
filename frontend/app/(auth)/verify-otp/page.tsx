@@ -1,84 +1,43 @@
-"use client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import VerifyOtpForm from "./otp-form";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
+import { ERROR_CODES } from "@/utils/errorCode";
+import { authService } from "@/services/authService";
+import VerifyOtpTimer from "./verify-otp-timer";
 
-export default function VerifyOtpPage() {
-    const searchParams = useSearchParams();
-    const token = searchParams.get("token")
-    const [ttl, setTTL] = useState<number | null>(null);
-
-
-
-    useEffect(() => {
-        const getTTL = async () => {
-            if (!token) return;
-            try {
-                const res = await fetch(`/api/v1/auth/verify-otp?token=${token}`);
-                const data = await res.json();
-                console.log(data);
-                if (data.code === 20000) {
-
-                    setTTL(parseInt(data.data.ttl));
-                }
-            } catch (error) {
-                console.log(error);
-            }
+export default async function VerifyOtpPage({ searchParams }: { searchParams: { token?: string } }) {
+    const { token } = await searchParams;
+    if (!token) {
+        redirect("/signin")
+    }
+    try {
+        const result = await authService.getTTLOtp(token);
+        if (result.code !== 20000 || result.code === ERROR_CODES.EXPIRED_SESSION) {
+            redirect("/signin")
         }
-        getTTL();
-    }, [])
 
+        const ttl = parseInt(result.data.ttl);
 
-    useEffect(() => {
-        if (ttl === null || ttl <= 0) return;
+        return (
+            <Card className="w-full max-w-md bg-white rounded-xl shadow-lg">
+                <CardHeader>
+                    <CardTitle>Verify OTP - Complete your registration</CardTitle>
+                    <CardDescription className="text-justify">
+                        Enter the OTP sent to your email to verify your identity and complete the registration process.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
 
-        const interval = setInterval(() => {
-            setTTL(prevTTL => {
-                if (prevTTL === null || prevTTL <= 1) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prevTTL - 1;
-            });
-        }, 1000);
+                    <VerifyOtpForm token={token} />
 
-        return () => clearInterval(interval);
-    }, [ttl]);
+                    <Separator />
 
-
-    
-    return (
-        <Card className="w-full max-w-md bg-white rounded-xl shadow-lg">
-            <CardHeader>
-                <CardTitle>Verify OTP - Complete your registration</CardTitle>
-                <CardDescription className="text-justify">
-                    Enter the OTP sent to your email to verify your identity and complete the registration process.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-
-                <VerifyOtpForm token={token}/>
-
-                <Separator />
-
-                <div className="flex items-center justify-center space-x-1">
-                    <p className="text-sm text-muted-foreground text-justify">
-                        The OTP will expire in {" "}
-                        <span className="text-red-500 font-semibold"> {ttl}</span> seconds.
-                    </p>
-
-                    <Button
-                        variant="link"
-                        className="px-0 py-0 text-blue-600 hover:text-blue-800 transition"
-                        disabled={ttl !== null && ttl > 0}    
-                    >
-                        Resend
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
+                    <VerifyOtpTimer ttl={ttl} />
+                </CardContent>
+            </Card>
+        )
+    } catch (error) {
+        console.log(error);
+    }
 }

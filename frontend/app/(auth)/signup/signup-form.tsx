@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { authService } from "@/services/authService";
 import { ERROR_CODES } from "@/utils/errorCode";
 import { ERROR_MESSAGES } from "@/utils/errorMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -32,25 +33,21 @@ export default function SignUpForm() {
 
     const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
         if (values.password !== values.confirmPassword) {
-            form.setError("confirmPassword", { type: "manual", message: "Passwords do not match"});
+            form.setError("confirmPassword", { message: "Passwords do not match" });
             form.setValue("confirmPassword", "");
             return;
         }
         try {
-            const res = await fetch("/api/v1/auth/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
+            
+            const result = await authService.signUp({
+                email: values.email,
+                password: values.password,
             })
-            const result = await res.json();
             if (result.code === 20000) {
-                console.log("Đăng ký thành công:", result.message);
                 const { token } = result.data;
-                console.log(">>>Token:", token);
-                
                 router.push(`/verify-otp?token=${token}`)
             } else if (result.code === ERROR_CODES.EMAIL_ALREADY_EXISTS) {
-                form.setError("email", { type: "manual", message: ERROR_MESSAGES[result.code]});
+                form.setError("email", { message: ERROR_MESSAGES[result.code] });
 
                 form.setValue("password", "");
                 form.setValue("confirmPassword", "");

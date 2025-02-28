@@ -3,6 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPSlot } from "@/components/ui/input-otp";
+import { authService } from "@/services/authService";
+import { ERROR_CODES } from "@/utils/errorCode";
+import { ERROR_MESSAGES } from "@/utils/errorMessages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useRouter } from "next/navigation";
@@ -14,7 +17,7 @@ const otpSchema = z.object({
     otp: z.string().length(6, { message: "Your OTP must be exactly 6 digits" }),
 });
 
-export default function VerifyOtpForm(props: { token: string | null }) {
+export default function VerifyOtpForm(props: { token: string }) {
     const router = useRouter();
 
     const form = useForm<z.infer<typeof otpSchema>>({
@@ -27,21 +30,18 @@ export default function VerifyOtpForm(props: { token: string | null }) {
     const onSubmit = async (data: z.infer<typeof otpSchema>) => {
         setLoading(true);
         try {
-            const res = await fetch("/api/v1/auth/verify-otp", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    token: props.token,
-                    otp: data.otp,
-                }),
+            const result = await authService.verifyOTP({
+                token: props.token,
+                otp: data.otp,
             })
-
-            const result = await res.json();
             if (result.code === 20000) {
-
                 router.replace("/signin");
+            } else if (result.code === ERROR_CODES.OTP_DOES_NOT_MATCH) {
+                form.setError("otp", { message: ERROR_MESSAGES[result.code] })
+                form.setValue("otp", "");
+            } else if (result.code === ERROR_CODES.EXPIRED_SESSION) {
+                form.setError("otp", {message: ERROR_MESSAGES[result.code]})
+                form.setValue("otp", "");
             }
         } catch (error) {
             console.log(error);

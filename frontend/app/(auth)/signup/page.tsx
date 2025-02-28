@@ -17,7 +17,6 @@ export default function SignUpPage() {
                 <CardDescription>Use your email or another service to continue</CardDescription>
             </CardHeader>
             <CardContent>
-                {/* <LoginForm /> */}
                 <SignUpForm />
 
                 <div className="flex flex-col">
