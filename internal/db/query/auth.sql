@@ -27,3 +27,15 @@ INSERT INTO "user_profile" (
     "user_email",
     "user_nickname"
 ) VALUES ($1, $2, $3) RETURNING *;
+
+
+-- name: CreateUserSession :one
+INSERT INTO "user_session" (
+    "session_id",
+    "refresh_token",
+    "user_agent",
+    "client_ip",
+    "user_login_time",
+    "expires_at",
+    "user_id"
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;

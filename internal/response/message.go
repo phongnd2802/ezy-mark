@@ -10,6 +10,8 @@ var msg = map[int]string{
 	ErrCodeEmailAlreadyExists: "email already exists",
 	ErrCodeExpiredSession: "expired verification session",
 	ErrCodeOtpDoesNotMatch: "otp does not match",
+	ErrCodeAuthenticationFailed: "email or password is incorrect!",
+	ErrCodeAccountNotVerified: "account is not verified",
 	ErrCodeInternalServer: "internal server error",
 }
 

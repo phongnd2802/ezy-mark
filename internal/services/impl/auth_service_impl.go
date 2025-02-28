@@ -5,17 +5,22 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/phongnd2802/daily-social/internal/cache"
 	"github.com/phongnd2802/daily-social/internal/consts"
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/dtos"
 	"github.com/phongnd2802/daily-social/internal/helpers"
+	middleware "github.com/phongnd2802/daily-social/internal/middlewares"
 	"github.com/phongnd2802/daily-social/internal/response"
 	"github.com/phongnd2802/daily-social/internal/worker"
 	"github.com/phongnd2802/daily-social/pkg/crypto"
 	"github.com/phongnd2802/daily-social/pkg/random"
+	"github.com/phongnd2802/daily-social/pkg/token"
+	"github.com/phongnd2802/daily-social/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,8 +31,67 @@ type authServiceImpl struct {
 }
 
 func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) (code int, res *dtos.LoginResponse, err error) {
+	// Check Email
+	userFound, err := s.store.GetUserBaseByEmail(ctx, params.Email)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return response.ErrCodeAuthenticationFailed, nil, nil
+		}
+		return response.ErrCodeInternalServer, nil, err
+	}
 
-	return response.ErrCodeSuccess, nil, nil
+	matched := crypto.VerifyPassword(params.Password, userFound.UserPassword)
+	if !matched {
+		return response.ErrCodeAuthenticationFailed, nil, nil
+	}
+
+	// Check account active
+	if !userFound.IsVerified.Bool {
+		return response.ErrCodeAccountNotVerified, nil, nil
+	}
+
+	// Generate Access Token and Refresh Token
+	subToken := utils.GenerateCliTokenUUID(userFound.UserID)
+	log.Info().Str("subToken", subToken).Msg("Generate subToken")
+
+	accessToken, err := token.CreateToken(subToken, "1h")
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	refreshToken, err := token.CreateToken(subToken, "168h")
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+
+	// Update State Login
+	userAgent, _ := ctx.Value(middleware.UserAgentKey).(string)
+	clientIP, _ := ctx.Value(middleware.ClientIPKey).(string)
+	go func ()  {
+		newCtx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+		defer cancel()
+		_, err := s.store.CreateUserSession(newCtx, db.CreateUserSessionParams{
+			SessionID: uuid.New(),
+			RefreshToken: refreshToken,
+			UserAgent: userAgent,
+			ClientIp: clientIP,
+			UserLoginTime: pgtype.Timestamptz{
+				Time: time.Now(),
+				InfinityModifier: pgtype.Finite,
+				Valid: true,
+			},
+			UserID: userFound.UserID,
+		})	
+		if err != nil {
+			log.Error().AnErr("errUpdateLogin", err)
+		}
+	}()
+
+
+	return response.ErrCodeSuccess, &dtos.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func (s *authServiceImpl) VerifyOTP(ctx context.Context, params *dtos.VerifyOTPReq) (int, *dtos.VerifyOTPRes, error) {
@@ -167,9 +231,8 @@ func (s *authServiceImpl) GetTTLOtp(ctx context.Context, token string) (int, *dt
 	if ttl < 0 {
 		return response.ErrCodeExpiredSession, nil, nil
 	}
-	return response.ErrCodeSuccess, &dtos.VerifyOTPRes{TTL: int(ttl.Seconds())} ,nil
+	return response.ErrCodeSuccess, &dtos.VerifyOTPRes{TTL: int(ttl.Seconds())}, nil
 }
-
 
 func NewAuthServiceImpl(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *authServiceImpl {
 	return &authServiceImpl{

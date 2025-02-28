@@ -1,0 +1,20 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample swagger for Fiber",
+        "title": "Daily Social Fiber API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Philip Nguyen",
+            "email": "duyphong0280@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://github.com/phongnd2802/daily-social/blob/main/LICENSE"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8000",
+    "basePath": "/api/v1",
+    "paths": {}
+}

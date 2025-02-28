@@ -5,6 +5,10 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/phongnd2802/daily-social/internal/cache"
@@ -12,6 +16,7 @@ import (
 	"github.com/phongnd2802/daily-social/internal/controllers/account"
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/global"
+	middleware "github.com/phongnd2802/daily-social/internal/middlewares"
 	"github.com/phongnd2802/daily-social/internal/response"
 	"github.com/phongnd2802/daily-social/internal/services"
 	"github.com/phongnd2802/daily-social/internal/services/impl"
@@ -20,9 +25,21 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+
+	"github.com/gofiber/swagger"
+	_ "github.com/phongnd2802/daily-social/docs"
 )
 
+// @title Daily Social Fiber API
+// @version 1.0
+// @description This is a sample swagger for Fiber
+// @termsOfService http://swagger.io/terms/
+// @contact.name Philip Nguyen
+// @contact.email duyphong0280@gmail.com
+// @license.name MIT
+// @license.url https://github.com/phongnd2802/daily-social/blob/main/LICENSE
+// @host localhost:8000
+// @BasePath /api/v1
 func main() {
 	config, err := config.LoadConfig(".env")
 	if err != nil {
@@ -83,12 +100,20 @@ func main() {
 
 	go runTaskProcessor(redisOpt, sender)
 	app := fiber.New()
+
+	app.Use(recover.New())
+	app.Use(requestid.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000",
-		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders: "Content-Type, Authorization",
+		AllowOrigins:     "http://localhost:3000",
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Content-Type, Authorization",
 		AllowCredentials: true,
 	}))
+
+	app.Use(compress.New())
+	app.Use(middleware.RequestMetadataMiddleware())
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return response.SuccessResponse(c, response.ErrCodeSuccess, "Success")
@@ -96,12 +121,12 @@ func main() {
 
 	app.Post("/api/v1/auth/signup", account.Auth.Register)
 	app.Post("/api/v1/auth/verify-otp", account.Auth.VerifyOTP)
+	app.Post("/api/v1/auth/login", account.Auth.Login)
 
 	app.Get("/api/v1/auth/verify-otp", account.Auth.GetTTLOtp)
 
 	app.Listen("127.0.0.1:8000")
 }
-
 
 func runTaskProcessor(reditOpt asynq.RedisClientOpt, sender email.EmailSender) {
 	taskProcessor := worker.NewRedisTaskProcessor(reditOpt, sender)

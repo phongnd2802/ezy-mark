@@ -11,6 +11,20 @@ type authController struct{}
 
 var Auth = new(authController)
 
+
+func (c *authController) Login(ctx *fiber.Ctx) error {
+	params := new(dtos.LoginRequest)
+	if err := ctx.BodyParser(params); err != nil {
+		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
+	}
+
+	code, data, err := services.AuthService().Login(ctx.UserContext(), params)
+	if err != nil {
+		return response.ErrorResponse(ctx, code, err)
+	}
+	return response.SuccessResponse(ctx, code, data)
+}
+
 func (c *authController) Register(ctx *fiber.Ctx) error {
 	params := new(dtos.RegisterRequest)
 	if err := ctx.BodyParser(params); err != nil {

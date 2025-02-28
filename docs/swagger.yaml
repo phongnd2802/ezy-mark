@@ -1,0 +1,15 @@
+basePath: /api/v1
+host: localhost:8000
+info:
+  contact:
+    email: duyphong0280@gmail.com
+    name: Philip Nguyen
+  description: This is a sample swagger for Fiber
+  license:
+    name: MIT
+    url: https://github.com/phongnd2802/daily-social/blob/main/LICENSE
+  termsOfService: http://swagger.io/terms/
+  title: Daily Social Fiber API
+  version: "1.0"
+paths: {}
+swagger: "2.0"

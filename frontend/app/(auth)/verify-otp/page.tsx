@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import VerifyOtpForm from "./otp-form";
 import { Separator } from "@/components/ui/separator";
 import { redirect } from "next/navigation";
-import { ERROR_CODES } from "@/utils/errorCode";
 import { authService } from "@/services/authService";
 import VerifyOtpTimer from "./verify-otp-timer";
 
@@ -13,10 +12,9 @@ export default async function VerifyOtpPage({ searchParams }: { searchParams: { 
     }
     try {
         const result = await authService.getTTLOtp(token);
-        if (result.code !== 20000 || result.code === ERROR_CODES.EXPIRED_SESSION) {
-            redirect("/signin")
+        if (result.code !== 20000) {
+            redirect("/signin");
         }
-
         const ttl = parseInt(result.data.ttl);
 
         return (
@@ -39,5 +37,6 @@ export default async function VerifyOtpPage({ searchParams }: { searchParams: { 
         )
     } catch (error) {
         console.log(error);
+        redirect("/signin");
     }
 }

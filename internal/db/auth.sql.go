@@ -7,6 +7,10 @@ package db
 
 import (
 	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkUserBaseExists = `-- name: CheckUserBaseExists :one
@@ -88,6 +92,54 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 		&i.UserBirthday,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createUserSession = `-- name: CreateUserSession :one
+INSERT INTO "user_session" (
+    "session_id",
+    "refresh_token",
+    "user_agent",
+    "client_ip",
+    "user_login_time",
+    "expires_at",
+    "user_id"
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING session_id, user_id, refresh_token, user_agent, client_ip, is_blocked, user_login_time, user_logout_time, expires_at, created_at
+`
+
+type CreateUserSessionParams struct {
+	SessionID     uuid.UUID          `json:"session_id"`
+	RefreshToken  string             `json:"refresh_token"`
+	UserAgent     string             `json:"user_agent"`
+	ClientIp      string             `json:"client_ip"`
+	UserLoginTime pgtype.Timestamptz `json:"user_login_time"`
+	ExpiresAt     time.Time          `json:"expires_at"`
+	UserID        int64              `json:"user_id"`
+}
+
+func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error) {
+	row := q.db.QueryRow(ctx, createUserSession,
+		arg.SessionID,
+		arg.RefreshToken,
+		arg.UserAgent,
+		arg.ClientIp,
+		arg.UserLoginTime,
+		arg.ExpiresAt,
+		arg.UserID,
+	)
+	var i UserSession
+	err := row.Scan(
+		&i.SessionID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.UserAgent,
+		&i.ClientIp,
+		&i.IsBlocked,
+		&i.UserLoginTime,
+		&i.UserLogoutTime,
+		&i.ExpiresAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }

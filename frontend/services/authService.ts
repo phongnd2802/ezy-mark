@@ -17,8 +17,26 @@ interface VerifyOTPRequest{
     otp: string;
 }
 
+interface LoginRequest {
+    email: string;
+    password: string;
+}
+
+interface LoginResponse {
+    access_token: string;
+    refresh_token: string;
+}
 
 export const authService = {
+    // Login
+    logIn: async(params: LoginRequest) => {
+        try {
+            const res = await apiClient.post<ApiResponse<LoginResponse>>(`/auth/login`, params);
+            return res.data;
+        } catch (error) {
+            throw error
+        }
+    },
 
     // Register
     signUp: async (params: SignUpRequest) => {
