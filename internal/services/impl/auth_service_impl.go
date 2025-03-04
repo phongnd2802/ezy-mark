@@ -15,12 +15,12 @@ import (
 	"github.com/phongnd2802/daily-social/internal/dtos"
 	"github.com/phongnd2802/daily-social/internal/helpers"
 	middleware "github.com/phongnd2802/daily-social/internal/middlewares"
+	"github.com/phongnd2802/daily-social/internal/pkg/crypto"
+	"github.com/phongnd2802/daily-social/internal/pkg/random"
+	"github.com/phongnd2802/daily-social/internal/pkg/token"
+	"github.com/phongnd2802/daily-social/internal/pkg/utils"
 	"github.com/phongnd2802/daily-social/internal/response"
 	"github.com/phongnd2802/daily-social/internal/worker"
-	"github.com/phongnd2802/daily-social/pkg/crypto"
-	"github.com/phongnd2802/daily-social/pkg/random"
-	"github.com/phongnd2802/daily-social/pkg/token"
-	"github.com/phongnd2802/daily-social/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
 
@@ -63,30 +63,28 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-
 	// Update State Login
 	userAgent, _ := ctx.Value(middleware.UserAgentKey).(string)
 	clientIP, _ := ctx.Value(middleware.ClientIPKey).(string)
-	go func ()  {
-		newCtx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		_, err := s.store.CreateUserSession(newCtx, db.CreateUserSessionParams{
-			SessionID: uuid.New(),
+			SessionID:    uuid.New(),
 			RefreshToken: refreshToken,
-			UserAgent: userAgent,
-			ClientIp: clientIP,
+			UserAgent:    userAgent,
+			ClientIp:     clientIP,
 			UserLoginTime: pgtype.Timestamptz{
-				Time: time.Now(),
+				Time:             time.Now(),
 				InfinityModifier: pgtype.Finite,
-				Valid: true,
+				Valid:            true,
 			},
 			UserID: userFound.UserID,
-		})	
+		})
 		if err != nil {
 			log.Error().AnErr("errUpdateLogin", err)
 		}
 	}()
-
 
 	return response.ErrCodeSuccess, &dtos.LoginResponse{
 		AccessToken:  accessToken,
@@ -232,6 +230,50 @@ func (s *authServiceImpl) GetTTLOtp(ctx context.Context, token string) (int, *dt
 		return response.ErrCodeExpiredSession, nil, nil
 	}
 	return response.ErrCodeSuccess, &dtos.VerifyOTPRes{TTL: int(ttl.Seconds())}, nil
+}
+
+func (s *authServiceImpl) ResendOTP(ctx context.Context, params *dtos.ResendOTPReq) (int, error) {
+	tokenFound, err := s.store.GetUserByUserHash(ctx, params.Token)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return response.ErrCodeInvalidParams, nil
+		}
+		return response.ErrCodeInternalServer, err
+	}
+
+	newOtp := random.GenerateSixDigitOtp()
+	log.Info().Msgf(">>> OTP is: %d", newOtp)
+
+	userKeyOtp := helpers.GetUserKeyOtp(params.Token)
+	err = s.cache.SetEx(ctx, userKeyOtp, newOtp, consts.OTP_EXPIRATION)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+
+	userKeySession := helpers.GetUserKeySession(params.Token)
+	err = s.cache.SetEx(ctx, userKeySession, newOtp, consts.OTP_EXPIRATION)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+	log.Info().Msg("Sending OTP to email")
+
+	payload := &worker.PayloadSendVerifyEmail{
+		Email: tokenFound.UserEmail,
+		Otp:   strconv.Itoa(newOtp),
+	}
+
+	opts := []asynq.Option{
+		asynq.ProcessIn(10 * time.Second),
+		asynq.Queue(worker.QueueCritical),
+		asynq.MaxRetry(2),
+	}
+
+	err = s.distributor.DistributeTaskSendVerifyEmail(ctx, payload, opts...)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+
+	return response.ErrCodeSuccess, nil
 }
 
 func NewAuthServiceImpl(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *authServiceImpl {

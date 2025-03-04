@@ -1,4 +1,4 @@
-package middleware
+package middlewares
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/phongnd2802/daily-social/pkg/utils"
+	"github.com/phongnd2802/daily-social/internal/pkg/utils"
 )
 
 type CSPConfig struct {

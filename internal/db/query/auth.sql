@@ -39,3 +39,8 @@ INSERT INTO "user_session" (
     "expires_at",
     "user_id"
 ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+
+-- name: GetUserByUserHash :one
+SELECT *
+FROM "user_base"
+WHERE "user_hash" = $1;

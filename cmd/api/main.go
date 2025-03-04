@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/phongnd2802/daily-social/internal/controllers"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,15 +14,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/phongnd2802/daily-social/internal/cache"
 	"github.com/phongnd2802/daily-social/internal/config"
-	"github.com/phongnd2802/daily-social/internal/controllers/account"
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/global"
-	middleware "github.com/phongnd2802/daily-social/internal/middlewares"
+	"github.com/phongnd2802/daily-social/internal/middlewares"
+	"github.com/phongnd2802/daily-social/internal/pkg/email"
 	"github.com/phongnd2802/daily-social/internal/response"
 	"github.com/phongnd2802/daily-social/internal/services"
 	"github.com/phongnd2802/daily-social/internal/services/impl"
 	"github.com/phongnd2802/daily-social/internal/worker"
-	"github.com/phongnd2802/daily-social/pkg/email"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -111,20 +111,20 @@ func main() {
 	}))
 
 	app.Use(compress.New())
-	app.Use(middleware.RequestMetadataMiddleware())
+	app.Use(middlewares.RequestMetadataMiddleware())
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("/api/v1/foo", func(c *fiber.Ctx) error {
 		return response.SuccessResponse(c, response.ErrCodeSuccess, "Success")
 	})
 
-	app.Post("/api/v1/auth/signup", account.Auth.Register)
-	app.Post("/api/v1/auth/verify-otp", account.Auth.VerifyOTP)
-	app.Post("/api/v1/auth/login", account.Auth.Login)
+	app.Post("/api/v1/auth/signup", controllers.Auth.Register)
+	app.Post("/api/v1/auth/verify-otp", controllers.Auth.VerifyOTP)
+	app.Post("/api/v1/auth/login", controllers.Auth.Login)
 
-	app.Get("/api/v1/auth/verify-otp", account.Auth.GetTTLOtp)
-
+	app.Get("/api/v1/auth/verify-otp", controllers.Auth.GetTTLOtp)
+	app.Post("/api/v1/auth/resend-otp", controllers.Auth.ResendOTP)
 	app.Listen("127.0.0.1:8000")
 }
 

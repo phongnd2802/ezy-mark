@@ -59,4 +59,8 @@ redis:
 sqlc:
 	sqlc generate
 
+swag:
+	swag init -g ./cmd/api/main.go -o ./docs
+
 .PHONY: api flush server templ css icons network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
+.PHONY: swag

@@ -11,9 +11,8 @@ type LoginResponse struct {
 }
 
 type RegisterRequest struct {
-	Email           string `json:"email" form:"email"`
-	Password        string `json:"password" form:"password"`
-	ConfirmPassword string `json:"confirm_password" form:"confirm_password"`
+	Email    string `json:"email" form:"email"`
+	Password string `json:"password" form:"password"`
 }
 
 type RegisterResponse struct {
@@ -27,4 +26,8 @@ type VerifyOTPReq struct {
 
 type VerifyOTPRes struct {
 	TTL int `json:"ttl"`
+}
+
+type ResendOTPReq struct {
+	Token string `json:"token" form:"token"`
 }

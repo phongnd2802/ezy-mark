@@ -167,6 +167,29 @@ func (q *Queries) GetUserBaseByEmail(ctx context.Context, userEmail string) (Use
 	return i, err
 }
 
+const getUserByUserHash = `-- name: GetUserByUserHash :one
+SELECT user_id, user_email, user_hash, user_password, user_otp, is_verified, is_deleted, created_at, updated_at
+FROM "user_base"
+WHERE "user_hash" = $1
+`
+
+func (q *Queries) GetUserByUserHash(ctx context.Context, userHash string) (UserBase, error) {
+	row := q.db.QueryRow(ctx, getUserByUserHash, userHash)
+	var i UserBase
+	err := row.Scan(
+		&i.UserID,
+		&i.UserEmail,
+		&i.UserHash,
+		&i.UserPassword,
+		&i.UserOtp,
+		&i.IsVerified,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateUserVerify = `-- name: UpdateUserVerify :one
 UPDATE "user_base"
 SET "is_verified" = true

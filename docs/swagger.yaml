@@ -1,4 +1,39 @@
 basePath: /api/v1
+definitions:
+  dtos.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dtos.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  dtos.ResendOTPReq:
+    properties:
+      token:
+        type: string
+    type: object
+  dtos.VerifyOTPReq:
+    properties:
+      otp:
+        type: string
+      token:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
 host: localhost:8000
 info:
   contact:
@@ -11,5 +46,113 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Daily Social Fiber API
   version: "1.0"
-paths: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User Login
+      tags:
+      - Authentication Management
+  /auth/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Resend OTP
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.ResendOTPReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Resend OTP
+      tags:
+      - Authentication Management
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register user with email and password
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User Register
+      tags:
+      - Authentication Management
+  /auth/verify-otp:
+    get:
+      consumes:
+      - application/json
+      description: Get Time To Live OTP
+      parameters:
+      - description: Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Get TTL OTP
+      tags:
+      - Authentication Management
+    post:
+      consumes:
+      - application/json
+      description: Authenticate OTP
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.VerifyOTPReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User Verify OTP
+      tags:
+      - Authentication Management
 swagger: "2.0"
