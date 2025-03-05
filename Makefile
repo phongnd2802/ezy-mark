@@ -1,4 +1,4 @@
-GOOSE_DBSTRING ?= "user=root password=secret host=127.0.0.1 port=5555 dbname=daily-social sslmode=disable"
+GOOSE_DBSTRING ?= "user=root password=secret host=127.0.0.1 port=5400 dbname=daily-social sslmode=disable"
 GOOSE_MIGRATION_DIR ?= internal/db/migrations
 GOOSE_DRIVER ?= postgres
 
@@ -8,8 +8,6 @@ api:
 server:
 	@air
 
-templ:
-	templ generate --watch --proxy="http://localhost:1323" --open-browser=false -v
 
 css:
 	npx @tailwindcss/cli -i ./views/css/app.css -o ./public/css/style.css --watch
@@ -26,10 +24,10 @@ postgres:
 
 
 createdb:
-	docker exec -it daily-social-db createdb --username=root --owner=root daily-social
+	docker exec -it postgres_container createdb --username=root --owner=root daily-social
 
 dropdb:
-	docker exec -it daily-social-db dropdb daily-social
+	docker exec -it postgres_container dropdb daily-social
 
 
 migrate-up:
@@ -49,7 +47,7 @@ create-migration:
 
 
 flush:
-	docker exec -it redis-db redis-cli flushall
+	docker exec -it redis_container redis-cli flushall
 
 reset: flush migrate-down migrate-up sqlc
 

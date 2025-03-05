@@ -14,7 +14,7 @@ import (
 	"github.com/phongnd2802/daily-social/internal/db"
 	"github.com/phongnd2802/daily-social/internal/dtos"
 	"github.com/phongnd2802/daily-social/internal/helpers"
-	middleware "github.com/phongnd2802/daily-social/internal/middlewares"
+	"github.com/phongnd2802/daily-social/internal/middlewares"
 	"github.com/phongnd2802/daily-social/internal/pkg/crypto"
 	"github.com/phongnd2802/daily-social/internal/pkg/random"
 	"github.com/phongnd2802/daily-social/internal/pkg/token"
@@ -64,8 +64,8 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 	}
 
 	// Update State Login
-	userAgent, _ := ctx.Value(middleware.UserAgentKey).(string)
-	clientIP, _ := ctx.Value(middleware.ClientIPKey).(string)
+	userAgent, _ := ctx.Value(middlewares.UserAgentKey).(string)
+	clientIP, _ := ctx.Value(middlewares.ClientIPKey).(string)
 	go func() {
 		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()

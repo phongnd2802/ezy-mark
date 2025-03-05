@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:15-alpine
+    ports:
+      - "5400:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: daily-social
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres:/data/postgres
+    networks:
+      - daily-social-network
+
+  redis:
+    container_name: redis_container
+    image: redis:7-alpine
+    ports:
+      - "6370:6379"
+    environment:
+      REDIS_PASSWORD: secret
+      REDIS_PORT: 6379
+    networks:
+      - daily-social-network
+
+  minio:
+    container_name: minio_container
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - ./minio:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - daily-social-network
+
+  mc-init:
+    container_name: mc_init
+    image: minio/mc
+    entrypoint: |
+      /bin/bash -c "
+      sleep 5;
+      /usr/bin/mc config --quiet host add dmlminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --quiet dmlminio/movies;
+      "
+    depends_on:
+      - minio
+    networks:
+      - daily-social-network
+
+
+networks:
+  daily-social-network:
