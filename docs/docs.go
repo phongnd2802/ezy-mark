@@ -16,47 +16,13 @@ const docTemplate = `{
         },
         "license": {
             "name": "MIT",
-            "url": "https://github.com/phongnd2802/daily-social/blob/main/LICENSE"
+            "url": "https://github.com/phongnd2802/ezy-mark/blob/main/LICENSE"
         },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/login": {
-            "post": {
-                "description": "Authenticate user with email and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Authentication Management"
-                ],
-                "summary": "User Login",
-                "parameters": [
-                    {
-                        "description": "payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dtos.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/resend-otp": {
             "post": {
                 "description": "Resend OTP",
@@ -78,6 +44,40 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/dtos.ResendOTPReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/signin": {
+            "post": {
+                "description": "Authenticate user with email and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Authentication Management"
+                ],
+                "summary": "User Login",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dtos.LoginRequest"
                         }
                     }
                 ],
@@ -253,7 +253,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8000",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Daily Social Fiber API",
+	Title:            "EzyMark Fiber API",
 	Description:      "This is a sample swagger for Fiber",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

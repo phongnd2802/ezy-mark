@@ -1,1 +1,1 @@
-# daily-social
+# EzyMark

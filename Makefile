@@ -1,33 +1,24 @@
-GOOSE_DBSTRING ?= "user=root password=secret host=127.0.0.1 port=5400 dbname=daily-social sslmode=disable"
+GOOSE_DBSTRING ?= "user=root password=secret host=127.0.0.1 port=5400 dbname=ezy-mark sslmode=disable"
 GOOSE_MIGRATION_DIR ?= internal/db/migrations
 GOOSE_DRIVER ?= postgres
 
-api:
-	@go run cmd/api/main.go
+
 
 server:
-	@air
-
-
-css:
-	npx @tailwindcss/cli -i ./views/css/app.css -o ./public/css/style.css --watch
-
-icons:
-	@go run cmd/icongen/main.go
+	@go run cmd/server/main.go
 
 
 network:
-	docker network create daily-social-network
+	docker network create ezy-mark-network
 
 postgres:
-	docker run --name daily-social-db --network daily-social-network -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -p 5555:5432 postgres:15-alpine
-
+	docker run --name ezy-mark-db --network ezy-mark-network -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -p 5555:5432 postgres:15-alpine
 
 createdb:
-	docker exec -it postgres_container createdb --username=root --owner=root daily-social
+	docker exec -it postgres_container createdb --username=root --owner=root ezy-mark
 
 dropdb:
-	docker exec -it postgres_container dropdb daily-social
+	docker exec -it postgres_container dropdb ezy-mark
 
 
 migrate-up:
@@ -52,13 +43,13 @@ flush:
 reset: flush migrate-down migrate-up sqlc
 
 redis: 
-	docker run --name redis-db --network daily-social-network  -p 6380:6379 -d redis:7-alpine
+	docker run --name redis-db --network ezy-mark-network  -p 6380:6379 -d redis:7-alpine
 
 sqlc:
 	sqlc generate
 
 swag:
-	swag init -g ./cmd/api/main.go -o ./docs
+	swag init -g ./cmd/server/main.go -o ./docs
 
 .PHONY: api flush server templ css icons network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
 .PHONY: swag

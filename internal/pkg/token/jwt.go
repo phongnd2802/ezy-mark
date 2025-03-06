@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"github.com/phongnd2802/daily-social/internal/global"
+	"github.com/phongnd2802/ezy-mark/internal/global"
 )
 
 type PayloadClaims struct {

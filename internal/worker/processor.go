@@ -5,7 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/hibiken/asynq"
-	"github.com/phongnd2802/daily-social/internal/pkg/email"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/email"
 )
 
 const (

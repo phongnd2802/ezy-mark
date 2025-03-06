@@ -1,4 +1,4 @@
-module github.com/phongnd2802/daily-social
+module github.com/phongnd2802/ezy-mark
 
 go 1.23.4
 

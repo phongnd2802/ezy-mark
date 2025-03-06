@@ -9,18 +9,18 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/phongnd2802/daily-social/internal/cache"
-	"github.com/phongnd2802/daily-social/internal/consts"
-	"github.com/phongnd2802/daily-social/internal/db"
-	"github.com/phongnd2802/daily-social/internal/dtos"
-	"github.com/phongnd2802/daily-social/internal/helpers"
-	"github.com/phongnd2802/daily-social/internal/middlewares"
-	"github.com/phongnd2802/daily-social/internal/pkg/crypto"
-	"github.com/phongnd2802/daily-social/internal/pkg/random"
-	"github.com/phongnd2802/daily-social/internal/pkg/token"
-	"github.com/phongnd2802/daily-social/internal/pkg/utils"
-	"github.com/phongnd2802/daily-social/internal/response"
-	"github.com/phongnd2802/daily-social/internal/worker"
+	"github.com/phongnd2802/ezy-mark/internal/cache"
+	"github.com/phongnd2802/ezy-mark/internal/consts"
+	"github.com/phongnd2802/ezy-mark/internal/db"
+	"github.com/phongnd2802/ezy-mark/internal/dtos"
+	"github.com/phongnd2802/ezy-mark/internal/helpers"
+	"github.com/phongnd2802/ezy-mark/internal/middlewares"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/crypto"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/random"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/utils"
+	"github.com/phongnd2802/ezy-mark/internal/response"
+	"github.com/phongnd2802/ezy-mark/internal/worker"
 	"github.com/rs/zerolog/log"
 )
 
@@ -66,8 +66,8 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 	// Update State Login
 	userAgent, _ := ctx.Value(middlewares.UserAgentKey).(string)
 	clientIP, _ := ctx.Value(middlewares.ClientIPKey).(string)
-	go func() {
-		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	go func(ctx context.Context) {
+		newCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 		_, err := s.store.CreateUserSession(newCtx, db.CreateUserSessionParams{
 			SessionID:    uuid.New(),
@@ -84,7 +84,7 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 		if err != nil {
 			log.Error().AnErr("errUpdateLogin", err)
 		}
-	}()
+	}(ctx)
 
 	return response.ErrCodeSuccess, &dtos.LoginResponse{
 		AccessToken:  accessToken,

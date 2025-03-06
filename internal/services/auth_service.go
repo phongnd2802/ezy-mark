@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	"github.com/phongnd2802/daily-social/internal/dtos"
+	"github.com/phongnd2802/ezy-mark/internal/dtos"
 )
 
 type iAuthService interface {

@@ -9,12 +9,12 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: daily-social
+      POSTGRES_DB: ezy-mark
       PGDATA: /data/postgres
     volumes:
       - ./postgres:/data/postgres
     networks:
-      - daily-social-network
+      - ezy-mark-network
 
   redis:
     container_name: redis_container
@@ -25,7 +25,7 @@ services:
       REDIS_PASSWORD: secret
       REDIS_PORT: 6379
     networks:
-      - daily-social-network
+      - ezy-mark-network
 
   minio:
     container_name: minio_container
@@ -40,7 +40,7 @@ services:
       - ./minio:/data
     command: server /data --console-address ":9001"
     networks:
-      - daily-social-network
+      - ezy-mark-network
 
   mc-init:
     container_name: mc_init
@@ -54,8 +54,8 @@ services:
     depends_on:
       - minio
     networks:
-      - daily-social-network
+      - ezy-mark-network
 
 
 networks:
-  daily-social-network:
+  ezy-mark-network:

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/phongnd2802/daily-social/internal/global"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -51,8 +50,8 @@ func (r *redisCache) Set(ctx context.Context, key string, value interface{}) err
 	return r.client.Set(ctx, key, value, 0).Err()
 }
 
-func NewRedisClient() Cache {
+func NewRedisClient(client *redis.Client) Cache {
 	return &redisCache{
-		client: global.Rdb,
+		client: client,
 	}
 }

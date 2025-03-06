@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/phongnd2802/daily-social/internal/dtos"
-	"github.com/phongnd2802/daily-social/internal/response"
-	"github.com/phongnd2802/daily-social/internal/services"
+	"github.com/phongnd2802/ezy-mark/internal/dtos"
+	"github.com/phongnd2802/ezy-mark/internal/response"
+	"github.com/phongnd2802/ezy-mark/internal/services"
 )
 
 type authController struct{}
@@ -19,7 +19,7 @@ var Auth = new(authController)
 // @Produce      json
 // @Param        payload body dtos.LoginRequest true "payload"
 // @Success      200  {object}  response.Response
-// @Router       /auth/login [post]
+// @Router       /auth/signin [post]
 func (c *authController) Login(ctx *fiber.Ctx) error {
 	params := new(dtos.LoginRequest)
 	if err := ctx.BodyParser(params); err != nil {

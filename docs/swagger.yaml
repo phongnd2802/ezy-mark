@@ -42,33 +42,11 @@ info:
   description: This is a sample swagger for Fiber
   license:
     name: MIT
-    url: https://github.com/phongnd2802/daily-social/blob/main/LICENSE
+    url: https://github.com/phongnd2802/ezy-mark/blob/main/LICENSE
   termsOfService: http://swagger.io/terms/
-  title: Daily Social Fiber API
+  title: EzyMark Fiber API
   version: "1.0"
 paths:
-  /auth/login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticate user with email and password
-      parameters:
-      - description: payload
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/dtos.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: User Login
-      tags:
-      - Authentication Management
   /auth/resend-otp:
     post:
       consumes:
@@ -89,6 +67,28 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: Resend OTP
+      tags:
+      - Authentication Management
+  /auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dtos.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: User Login
       tags:
       - Authentication Management
   /auth/signup:
