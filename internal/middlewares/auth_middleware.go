@@ -16,6 +16,8 @@ func AuthenticationMiddleware() fiber.Handler {
 				Message: "unauthorized",
 			})
 		}
+		
+		
 
 		// validate jwt token by subject
 		claims, err := token.VerifyTokenSubject(jwtToken)

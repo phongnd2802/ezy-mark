@@ -14,3 +14,4 @@ func ExtractBearerToken(c *fiber.Ctx) (string, bool) {
 
 	return "", false
 }
+

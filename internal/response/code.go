@@ -12,5 +12,7 @@ const (
 	ErrCodeOtpDoesNotMatch      = 41003
 	ErrCodeAuthenticationFailed = 41004
 	ErrCodeAccountNotVerified   = 41005
+	ErrCodeTokenFlagged         = 41006
+	ErrCodeTokenInvalid         = 41007
 	ErrCodeInternalServer       = 50000
 )

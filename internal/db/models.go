@@ -7,7 +7,6 @@ package db
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -37,7 +36,8 @@ type UserProfile struct {
 }
 
 type UserSession struct {
-	SessionID        uuid.UUID          `json:"session_id"`
+	SessionID        int64              `json:"session_id"`
+	SubToken         string             `json:"sub_token"`
 	UserID           int64              `json:"user_id"`
 	RefreshToken     string             `json:"refresh_token"`
 	RefreshTokenUsed pgtype.Text        `json:"refresh_token_used"`
@@ -45,7 +45,6 @@ type UserSession struct {
 	ClientIp         string             `json:"client_ip"`
 	IsBlocked        bool               `json:"is_blocked"`
 	UserLoginTime    pgtype.Timestamptz `json:"user_login_time"`
-	UserLogoutTime   pgtype.Timestamptz `json:"user_logout_time"`
 	ExpiresAt        time.Time          `json:"expires_at"`
 	CreatedAt        time.Time          `json:"created_at"`
 }

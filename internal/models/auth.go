@@ -31,3 +31,8 @@ type VerifyOTPRes struct {
 type ResendOTPReq struct {
 	Token string `json:"token" form:"token"`
 }
+
+type RefreshTokenParams struct {
+	SubToken     string
+	RefreshToken string
+}

@@ -12,6 +12,8 @@ var msg = map[int]string{
 	ErrCodeOtpDoesNotMatch: "otp does not match",
 	ErrCodeAuthenticationFailed: "email or password is incorrect!",
 	ErrCodeAccountNotVerified: "account is not verified",
+	ErrCodeTokenInvalid: "invalid token",
+	ErrCodeTokenFlagged: "suspicious activity detected, please reauthenticate.",
 	ErrCodeInternalServer: "internal server error",
 }
 

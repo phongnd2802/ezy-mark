@@ -23,6 +23,7 @@ func (r *AuthRouter) InitAuthRoute(Router fiber.Router) {
 	authPrivate := Router.Group("/auth")
 	authPrivate.Use(middlewares.AuthenticationMiddleware())
 	{
-		authPrivate.Post("/logout", nil)
+		authPrivate.Post("/logout", controllers.Auth.Logout)
+		authPrivate.Post("/refresh-token", controllers.Auth.RefreshToken)
 	}
 }

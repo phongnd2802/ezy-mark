@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS "user_profile" (
 );
 
 CREATE TABLE IF NOT EXISTS "user_session" (
-    "session_id" uuid PRIMARY KEY,
+    "session_id" bigserial PRIMARY KEY,
+    "sub_token" varchar NOT NULL,
     "user_id" bigint NOT NULL,
     "refresh_token" varchar NOT NULL,
     "refresh_token_used" varchar DEFAULT NULL,
@@ -37,7 +38,6 @@ CREATE TABLE IF NOT EXISTS "user_session" (
     "client_ip" varchar NOT NULL,
     "is_blocked" boolean NOT NULL DEFAULT false,
     "user_login_time" timestamptz DEFAULT NULL,
-    "user_logout_time" timestamptz  DEFAULT NULL,
     "expires_at" timestamptz NOT NULL,
     "created_at" timestamptz NOT NULL DEFAULT (now())
 );

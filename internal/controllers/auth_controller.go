@@ -3,6 +3,8 @@ package controllers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/phongnd2802/ezy-mark/internal/models"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/context"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
 	"github.com/phongnd2802/ezy-mark/internal/response"
 	"github.com/phongnd2802/ezy-mark/internal/services"
 )
@@ -117,4 +119,50 @@ func (c *authController) ResendOTP(ctx *fiber.Ctx) error {
 		return response.ErrorResponse(ctx, code, err)
 	}
 	return response.SuccessResponse(ctx, code, nil)
+}
+
+
+// Logout godoc
+// @Summary      User Logout
+// @Description  Logs out the authenticated user by revoking their session and tokens.
+// @Tags         Authentication Management
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer token"
+// @Success      200  {object}  response.Response
+// @Failure      401  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /auth/logout [post]
+func (c *authController) Logout(ctx *fiber.Ctx) error {
+	sessionId, _ := context.GetSubjectUUID(ctx)
+	code, err := services.AuthService().Logout(ctx.UserContext(), sessionId)
+	if err != nil {
+		return response.ErrorResponse(ctx, code, err)
+	}
+	return response.SuccessResponse(ctx, code, nil)
+}
+
+// RefreshToken godoc
+// @Summary      Refresh Access Token
+// @Description  Refreshes the access token using a valid refresh token.
+// @Tags         Authentication Management
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer token"
+// @Success      200  {object}  response.Response
+// @Failure      401  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /auth/refresh-token [post]
+func (c *authController) RefreshToken(ctx *fiber.Ctx) error {
+	refreshToken, _ := token.ExtractBearerToken(ctx)
+	subToken, _ := context.GetSubjectUUID(ctx)
+	params := models.RefreshTokenParams{
+		RefreshToken: refreshToken,
+		SubToken: subToken,
+	}
+	code, data, err := services.AuthService().RefreshToken(ctx.UserContext(), &params)
+	if err != nil {
+		return response.ErrorResponse(ctx, code, err)
+	}
+	return response.SuccessResponse(ctx, code, data)
 }

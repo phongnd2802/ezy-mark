@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -26,7 +25,7 @@ import (
 )
 
 const (
-	OTP_EXPIRATION        int64 = 60
+	OTP_EXPIRATION        int64  = 60
 	ACCESS_TOKEN_TIME_EX  string = "1h"
 	REFRESH_TOKEN_TIME_EX string = "168h"
 )
@@ -77,7 +76,7 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-	// Give profileUserJson to redsi with key = subToken
+	// Give profileUserJson and access_token to redis with key = subToken
 	duration, _ := time.ParseDuration(ACCESS_TOKEN_TIME_EX)
 
 	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
@@ -102,7 +101,7 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		_, err := s.store.CreateUserSession(newCtx, db.CreateUserSessionParams{
-			SessionID:    uuid.New(),
+			SubToken:     subToken,
 			RefreshToken: refreshToken,
 			UserAgent:    userAgent,
 			ClientIp:     clientIP,
@@ -111,7 +110,8 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 				InfinityModifier: pgtype.Finite,
 				Valid:            true,
 			},
-			UserID: userFound.UserID,
+			ExpiresAt: time.Now().Add(7 * 24 * time.Second),
+			UserID:    userFound.UserID,
 		})
 		if err != nil {
 			log.Error().AnErr("errUpdateLogin", err)
@@ -309,13 +309,107 @@ func (s *authServiceImpl) ResendOTP(ctx context.Context, params *models.ResendOT
 }
 
 // Logout implements services.IAuthService.
-func (s *authServiceImpl) Logout(ctx context.Context) (code int, err error) {
-	panic("unimplemented")
+func (s *authServiceImpl) Logout(ctx context.Context, subToken string) (int, error) {
+	err := s.store.DeleteSessionBySubToken(ctx, subToken)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+
+	err = s.cache.Del(ctx, subToken)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+	return response.ErrCodeSuccess, nil
 }
 
 // RefreshToken implements services.IAuthService.
-func (s *authServiceImpl) RefreshToken(ctx context.Context) (code int, res *models.LoginResponse, err error) {
-	panic("unimplemented")
+func (s *authServiceImpl) RefreshToken(ctx context.Context, params *models.RefreshTokenParams) (code int, res *models.LoginResponse, err error) {
+	foundSession, err := s.store.GetSessionByRefreshTokenUsed(ctx, pgtype.Text{String: params.RefreshToken, Valid: true})
+	if err != nil && err != pgx.ErrNoRows {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	if foundSession.SessionID > 0 {
+		if foundSession.RefreshTokenUsed.String == params.RefreshToken {
+			// Xử lý đơn giản -> Bắt user đăng nhập lại
+			err := s.store.DeleteSessionByUserId(ctx, foundSession.UserID)
+			if err != nil {
+				return response.ErrCodeInternalServer, nil, err
+			}
+			return response.ErrCodeTokenFlagged, nil, nil
+		}
+	}
+	foundToken, err := s.store.GetSessionBySubToken(ctx, params.SubToken)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return response.ErrCodeTokenInvalid, nil, err
+		}
+		return response.ErrCodeInternalServer, nil, err
+	}
+	if foundToken.RefreshToken != params.RefreshToken {
+		return response.ErrCodeTokenInvalid, nil, nil
+	}
+
+	// Generate New Token Pair
+	subToken := utils.GenerateCliTokenUUID(foundToken.UserID)
+	log.Info().
+		Str("subToken", subToken).
+		Int64("userID", foundToken.UserID).
+		Msg("Refresh Token")
+
+	// Get UserProfile Profile
+	profileUser, err := s.store.GetUserProfile(ctx, foundToken.UserID)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	// Convert to Json
+	profileUserJson, err := sonic.Marshal(profileUser)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	// Give profileUserJson and access_token to redis with key = subToken
+	duration, _ := time.ParseDuration(ACCESS_TOKEN_TIME_EX)
+
+	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	// Generate AccessToken and RefreshToken
+	accessToken, err := token.CreateToken(subToken, ACCESS_TOKEN_TIME_EX)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	refreshToken, err := token.CreateToken(subToken, REFRESH_TOKEN_TIME_EX)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		err := s.store.UpdateSession(newCtx, db.UpdateSessionParams{
+			RefreshToken: refreshToken,
+			RefreshTokenUsed: pgtype.Text{
+				String: params.RefreshToken,
+				Valid:  true,
+			},
+			ExpiresAt: time.Now().Add(7 * 24 * time.Second),
+			SubToken:  subToken,
+			SessionID: foundToken.SessionID,
+		})
+
+		if err != nil {
+			log.Error().Err(err).Msg("Error update session")
+		}
+	}()
+
+	return response.ErrCodeSuccess, &models.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
 }
 
 func NewAuthServiceImpl(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *authServiceImpl {

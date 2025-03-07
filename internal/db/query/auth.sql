@@ -31,7 +31,7 @@ INSERT INTO "user_profile" (
 
 -- name: CreateUserSession :one
 INSERT INTO "user_session" (
-    "session_id",
+    "sub_token",
     "refresh_token",
     "user_agent",
     "client_ip",
@@ -45,8 +45,35 @@ SELECT *
 FROM "user_base"
 WHERE "user_hash" = $1;
 
--- name: GetUserProfile :one
-SELECT "user_id", "user_email", "user_nickname", "user_fullname", 
-"user_avatar", "user_mobile", "user_gender", "user_birthday"
-FROM "user_profile"
+
+-- name: DeleteSessionBySubToken :exec
+DELETE FROM "user_session"
+WHERE "sub_token" = $1;
+
+
+-- name: DeleteSessionByUserId :exec
+DELETE FROM "user_session"
 WHERE "user_id" = $1;
+
+-- name: CheckRefreshTokenUsed :one
+SELECT COUNT(*)
+FROM "user_session"
+WHERE "refresh_token_used" = $1;
+
+-- name: GetSessionBySubToken :one
+SELECT "session_id", "user_id", "refresh_token", "refresh_token_used"
+FROM "user_session"
+WHERE "sub_token" = $1 
+LIMIT 1;
+
+-- name: GetSessionByRefreshTokenUsed :one
+SELECT "session_id", "user_id", "refresh_token", "refresh_token_used"
+FROM "user_session"
+WHERE "refresh_token_used" = $1;
+
+-- name: UpdateSession :exec
+UPDATE "user_session"
+SET "refresh_token" = $1, "refresh_token_used" = $2, "expires_at" = $3, "sub_token" = $4
+WHERE "session_id" = $5;
+
+

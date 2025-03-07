@@ -9,9 +9,21 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const checkRefreshTokenUsed = `-- name: CheckRefreshTokenUsed :one
+SELECT COUNT(*)
+FROM "user_session"
+WHERE "refresh_token_used" = $1
+`
+
+func (q *Queries) CheckRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (int64, error) {
+	row := q.db.QueryRow(ctx, checkRefreshTokenUsed, refreshTokenUsed)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const checkUserBaseExists = `-- name: CheckUserBaseExists :one
 SELECT COUNT(*)
@@ -98,18 +110,18 @@ func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfilePa
 
 const createUserSession = `-- name: CreateUserSession :one
 INSERT INTO "user_session" (
-    "session_id",
+    "sub_token",
     "refresh_token",
     "user_agent",
     "client_ip",
     "user_login_time",
     "expires_at",
     "user_id"
-) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING session_id, user_id, refresh_token, refresh_token_used, user_agent, client_ip, is_blocked, user_login_time, user_logout_time, expires_at, created_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING session_id, sub_token, user_id, refresh_token, refresh_token_used, user_agent, client_ip, is_blocked, user_login_time, expires_at, created_at
 `
 
 type CreateUserSessionParams struct {
-	SessionID     uuid.UUID          `json:"session_id"`
+	SubToken      string             `json:"sub_token"`
 	RefreshToken  string             `json:"refresh_token"`
 	UserAgent     string             `json:"user_agent"`
 	ClientIp      string             `json:"client_ip"`
@@ -120,7 +132,7 @@ type CreateUserSessionParams struct {
 
 func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error) {
 	row := q.db.QueryRow(ctx, createUserSession,
-		arg.SessionID,
+		arg.SubToken,
 		arg.RefreshToken,
 		arg.UserAgent,
 		arg.ClientIp,
@@ -131,6 +143,7 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 	var i UserSession
 	err := row.Scan(
 		&i.SessionID,
+		&i.SubToken,
 		&i.UserID,
 		&i.RefreshToken,
 		&i.RefreshTokenUsed,
@@ -138,9 +151,79 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 		&i.ClientIp,
 		&i.IsBlocked,
 		&i.UserLoginTime,
-		&i.UserLogoutTime,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const deleteSessionBySubToken = `-- name: DeleteSessionBySubToken :exec
+DELETE FROM "user_session"
+WHERE "sub_token" = $1
+`
+
+func (q *Queries) DeleteSessionBySubToken(ctx context.Context, subToken string) error {
+	_, err := q.db.Exec(ctx, deleteSessionBySubToken, subToken)
+	return err
+}
+
+const deleteSessionByUserId = `-- name: DeleteSessionByUserId :exec
+DELETE FROM "user_session"
+WHERE "user_id" = $1
+`
+
+func (q *Queries) DeleteSessionByUserId(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteSessionByUserId, userID)
+	return err
+}
+
+const getSessionByRefreshTokenUsed = `-- name: GetSessionByRefreshTokenUsed :one
+SELECT "session_id", "user_id", "refresh_token", "refresh_token_used"
+FROM "user_session"
+WHERE "refresh_token_used" = $1
+`
+
+type GetSessionByRefreshTokenUsedRow struct {
+	SessionID        int64       `json:"session_id"`
+	UserID           int64       `json:"user_id"`
+	RefreshToken     string      `json:"refresh_token"`
+	RefreshTokenUsed pgtype.Text `json:"refresh_token_used"`
+}
+
+func (q *Queries) GetSessionByRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (GetSessionByRefreshTokenUsedRow, error) {
+	row := q.db.QueryRow(ctx, getSessionByRefreshTokenUsed, refreshTokenUsed)
+	var i GetSessionByRefreshTokenUsedRow
+	err := row.Scan(
+		&i.SessionID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.RefreshTokenUsed,
+	)
+	return i, err
+}
+
+const getSessionBySubToken = `-- name: GetSessionBySubToken :one
+SELECT "session_id", "user_id", "refresh_token", "refresh_token_used"
+FROM "user_session"
+WHERE "sub_token" = $1 
+LIMIT 1
+`
+
+type GetSessionBySubTokenRow struct {
+	SessionID        int64       `json:"session_id"`
+	UserID           int64       `json:"user_id"`
+	RefreshToken     string      `json:"refresh_token"`
+	RefreshTokenUsed pgtype.Text `json:"refresh_token_used"`
+}
+
+func (q *Queries) GetSessionBySubToken(ctx context.Context, subToken string) (GetSessionBySubTokenRow, error) {
+	row := q.db.QueryRow(ctx, getSessionBySubToken, subToken)
+	var i GetSessionBySubTokenRow
+	err := row.Scan(
+		&i.SessionID,
+		&i.UserID,
+		&i.RefreshToken,
+		&i.RefreshTokenUsed,
 	)
 	return i, err
 }
@@ -191,38 +274,29 @@ func (q *Queries) GetUserByUserHash(ctx context.Context, userHash string) (UserB
 	return i, err
 }
 
-const getUserProfile = `-- name: GetUserProfile :one
-SELECT "user_id", "user_email", "user_nickname", "user_fullname", 
-"user_avatar", "user_mobile", "user_gender", "user_birthday"
-FROM "user_profile"
-WHERE "user_id" = $1
+const updateSession = `-- name: UpdateSession :exec
+UPDATE "user_session"
+SET "refresh_token" = $1, "refresh_token_used" = $2, "expires_at" = $3, "sub_token" = $4
+WHERE "session_id" = $5
 `
 
-type GetUserProfileRow struct {
-	UserID       int64       `json:"user_id"`
-	UserEmail    string      `json:"user_email"`
-	UserNickname string      `json:"user_nickname"`
-	UserFullname pgtype.Text `json:"user_fullname"`
-	UserAvatar   pgtype.Text `json:"user_avatar"`
-	UserMobile   pgtype.Text `json:"user_mobile"`
-	UserGender   pgtype.Bool `json:"user_gender"`
-	UserBirthday pgtype.Date `json:"user_birthday"`
+type UpdateSessionParams struct {
+	RefreshToken     string      `json:"refresh_token"`
+	RefreshTokenUsed pgtype.Text `json:"refresh_token_used"`
+	ExpiresAt        time.Time   `json:"expires_at"`
+	SubToken         string      `json:"sub_token"`
+	SessionID        int64       `json:"session_id"`
 }
 
-func (q *Queries) GetUserProfile(ctx context.Context, userID int64) (GetUserProfileRow, error) {
-	row := q.db.QueryRow(ctx, getUserProfile, userID)
-	var i GetUserProfileRow
-	err := row.Scan(
-		&i.UserID,
-		&i.UserEmail,
-		&i.UserNickname,
-		&i.UserFullname,
-		&i.UserAvatar,
-		&i.UserMobile,
-		&i.UserGender,
-		&i.UserBirthday,
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) error {
+	_, err := q.db.Exec(ctx, updateSession,
+		arg.RefreshToken,
+		arg.RefreshTokenUsed,
+		arg.ExpiresAt,
+		arg.SubToken,
+		arg.SessionID,
 	)
-	return i, err
+	return err
 }
 
 const updateUserVerify = `-- name: UpdateUserVerify :one
