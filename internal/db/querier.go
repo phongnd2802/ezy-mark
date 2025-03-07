@@ -15,6 +15,7 @@ type Querier interface {
 	CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error)
 	GetUserBaseByEmail(ctx context.Context, userEmail string) (UserBase, error)
 	GetUserByUserHash(ctx context.Context, userHash string) (UserBase, error)
+	GetUserProfile(ctx context.Context, userID int64) (GetUserProfileRow, error)
 	UpdateUserVerify(ctx context.Context, userHash string) (UserBase, error)
 }
 

@@ -19,7 +19,7 @@ import (
 
 // @title EzyMark Fiber API
 // @version 1.0
-// @description This is a sample swagger for Fiber
+// @description EzyMark Fiber API provides endpoints for managing products, orders, and users in an e-commerce system.
 // @termsOfService http://swagger.io/terms/
 // @contact.name Philip Nguyen
 // @contact.email duyphong0280@gmail.com

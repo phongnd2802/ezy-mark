@@ -37,14 +37,15 @@ type UserProfile struct {
 }
 
 type UserSession struct {
-	SessionID      uuid.UUID          `json:"session_id"`
-	UserID         int64              `json:"user_id"`
-	RefreshToken   string             `json:"refresh_token"`
-	UserAgent      string             `json:"user_agent"`
-	ClientIp       string             `json:"client_ip"`
-	IsBlocked      bool               `json:"is_blocked"`
-	UserLoginTime  pgtype.Timestamptz `json:"user_login_time"`
-	UserLogoutTime pgtype.Timestamptz `json:"user_logout_time"`
-	ExpiresAt      time.Time          `json:"expires_at"`
-	CreatedAt      time.Time          `json:"created_at"`
+	SessionID        uuid.UUID          `json:"session_id"`
+	UserID           int64              `json:"user_id"`
+	RefreshToken     string             `json:"refresh_token"`
+	RefreshTokenUsed pgtype.Text        `json:"refresh_token_used"`
+	UserAgent        string             `json:"user_agent"`
+	ClientIp         string             `json:"client_ip"`
+	IsBlocked        bool               `json:"is_blocked"`
+	UserLoginTime    pgtype.Timestamptz `json:"user_login_time"`
+	UserLogoutTime   pgtype.Timestamptz `json:"user_logout_time"`
+	ExpiresAt        time.Time          `json:"expires_at"`
+	CreatedAt        time.Time          `json:"created_at"`
 }

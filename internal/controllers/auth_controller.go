@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/phongnd2802/ezy-mark/internal/dtos"
+	"github.com/phongnd2802/ezy-mark/internal/models"
 	"github.com/phongnd2802/ezy-mark/internal/response"
 	"github.com/phongnd2802/ezy-mark/internal/services"
 )
@@ -17,11 +17,11 @@ var Auth = new(authController)
 // @Tags         Authentication Management
 // @Accept       json
 // @Produce      json
-// @Param        payload body dtos.LoginRequest true "payload"
+// @Param        payload body models.LoginRequest true "payload"
 // @Success      200  {object}  response.Response
 // @Router       /auth/signin [post]
 func (c *authController) Login(ctx *fiber.Ctx) error {
-	params := new(dtos.LoginRequest)
+	params := new(models.LoginRequest)
 	if err := ctx.BodyParser(params); err != nil {
 		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
 	}
@@ -39,11 +39,11 @@ func (c *authController) Login(ctx *fiber.Ctx) error {
 // @Tags         Authentication Management
 // @Accept       json
 // @Produce      json
-// @Param        payload body dtos.RegisterRequest true "payload"
+// @Param        payload body models.RegisterRequest true "payload"
 // @Success      200  {object}  response.Response
 // @Router       /auth/signup [post]
 func (c *authController) Register(ctx *fiber.Ctx) error {
-	params := new(dtos.RegisterRequest)
+	params := new(models.RegisterRequest)
 	if err := ctx.BodyParser(params); err != nil {
 		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
 	}
@@ -61,11 +61,11 @@ func (c *authController) Register(ctx *fiber.Ctx) error {
 // @Tags         Authentication Management
 // @Accept       json
 // @Produce      json
-// @Param        payload body dtos.VerifyOTPReq true "payload"
+// @Param        payload body models.VerifyOTPReq true "payload"
 // @Success      200  {object}  response.Response
 // @Router       /auth/verify-otp [post]
 func (c *authController) VerifyOTP(ctx *fiber.Ctx) error {
-	params := new(dtos.VerifyOTPReq)
+	params := new(models.VerifyOTPReq)
 	if err := ctx.BodyParser(params); err != nil {
 		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
 	}
@@ -103,11 +103,11 @@ func (c *authController) GetTTLOtp(ctx *fiber.Ctx) error {
 // @Tags         Authentication Management
 // @Accept       json
 // @Produce      json
-// @Param        payload body dtos.ResendOTPReq true "payload"
+// @Param        payload body models.ResendOTPReq true "payload"
 // @Success      200  {object}  response.Response
 // @Router       /auth/resend-otp [post]
 func (c *authController) ResendOTP(ctx *fiber.Ctx) error {
-	params := new(dtos.ResendOTPReq)
+	params := new(models.ResendOTPReq)
 	if err := ctx.BodyParser(params); err != nil {
 		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
 	}
@@ -117,4 +117,8 @@ func (c *authController) ResendOTP(ctx *fiber.Ctx) error {
 		return response.ErrorResponse(ctx, code, err)
 	}
 	return response.SuccessResponse(ctx, code, nil)
+}
+
+func (c *authController) GetInfo(ctx *fiber.Ctx) error {
+	return response.SuccessResponse(ctx, response.ErrCodeSuccess, nil)
 }

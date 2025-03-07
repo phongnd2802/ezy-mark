@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample swagger for Fiber",
+        "description": "EzyMark Fiber API provides endpoints for managing products, orders, and users in an e-commerce system.",
         "title": "EzyMark Fiber API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {

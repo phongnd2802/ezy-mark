@@ -8,10 +8,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/phongnd2802/ezy-mark/internal/middlewares"
 	"github.com/phongnd2802/ezy-mark/internal/routes"
+	"github.com/bytedance/sonic"
 )
 
 func initRouter() *fiber.App {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		JSONEncoder: sonic.Marshal,
+		JSONDecoder: sonic.Unmarshal,
+	})
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")

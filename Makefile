@@ -8,6 +8,12 @@ server:
 	@go run cmd/server/main.go
 
 
+docker-up:
+	@docker-compose -f environment/docker-compose-dev.yml up
+
+docker-down:
+	@docker-compose -f environment/docker-compose-dev.yml down
+
 network:
 	docker network create ezy-mark-network
 
@@ -51,5 +57,5 @@ sqlc:
 swag:
 	swag init -g ./cmd/server/main.go -o ./docs
 
-.PHONY: api flush server templ css icons network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
-.PHONY: swag
+.PHONY: flush server network postgres migrate-up migrate-down create-migration sqlc createdb dropdb redis
+.PHONY: swag docker-up docker-down

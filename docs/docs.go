@@ -254,7 +254,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "EzyMark Fiber API",
-	Description:      "This is a sample swagger for Fiber",
+	Description:      "EzyMark Fiber API provides endpoints for managing products, orders, and users in an e-commerce system.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

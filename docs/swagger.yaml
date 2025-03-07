@@ -39,7 +39,8 @@ info:
   contact:
     email: duyphong0280@gmail.com
     name: Philip Nguyen
-  description: This is a sample swagger for Fiber
+  description: EzyMark Fiber API provides endpoints for managing products, orders,
+    and users in an e-commerce system.
   license:
     name: MIT
     url: https://github.com/phongnd2802/ezy-mark/blob/main/LICENSE

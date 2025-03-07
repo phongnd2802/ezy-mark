@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/phongnd2802/ezy-mark/internal/controllers"
+	"github.com/phongnd2802/ezy-mark/internal/middlewares"
 )
 
 type AuthRouter struct {
@@ -23,7 +24,9 @@ func (r *AuthRouter) InitAuthRoute(Router fiber.Router) {
 
 
 	authPrivate := Router.Group("/auth")
+	authPrivate.Use(middlewares.AuthenticationMiddleware())
 	{
 		authPrivate.Post("/logout", nil)
+		authPrivate.Get("/get_info", controllers.Auth.GetInfo)
 	}
 } 

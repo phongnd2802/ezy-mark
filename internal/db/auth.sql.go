@@ -105,7 +105,7 @@ INSERT INTO "user_session" (
     "user_login_time",
     "expires_at",
     "user_id"
-) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING session_id, user_id, refresh_token, user_agent, client_ip, is_blocked, user_login_time, user_logout_time, expires_at, created_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING session_id, user_id, refresh_token, refresh_token_used, user_agent, client_ip, is_blocked, user_login_time, user_logout_time, expires_at, created_at
 `
 
 type CreateUserSessionParams struct {
@@ -133,6 +133,7 @@ func (q *Queries) CreateUserSession(ctx context.Context, arg CreateUserSessionPa
 		&i.SessionID,
 		&i.UserID,
 		&i.RefreshToken,
+		&i.RefreshTokenUsed,
 		&i.UserAgent,
 		&i.ClientIp,
 		&i.IsBlocked,
@@ -186,6 +187,38 @@ func (q *Queries) GetUserByUserHash(ctx context.Context, userHash string) (UserB
 		&i.IsDeleted,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserProfile = `-- name: GetUserProfile :one
+SELECT "user_email", "user_nickname", "user_fullname", 
+"user_avatar", "user_mobile", "user_gender", "user_birthday"
+FROM "user_profile"
+WHERE "user_id" = $1
+`
+
+type GetUserProfileRow struct {
+	UserEmail    string      `json:"user_email"`
+	UserNickname string      `json:"user_nickname"`
+	UserFullname pgtype.Text `json:"user_fullname"`
+	UserAvatar   pgtype.Text `json:"user_avatar"`
+	UserMobile   pgtype.Text `json:"user_mobile"`
+	UserGender   pgtype.Bool `json:"user_gender"`
+	UserBirthday pgtype.Date `json:"user_birthday"`
+}
+
+func (q *Queries) GetUserProfile(ctx context.Context, userID int64) (GetUserProfileRow, error) {
+	row := q.db.QueryRow(ctx, getUserProfile, userID)
+	var i GetUserProfileRow
+	err := row.Scan(
+		&i.UserEmail,
+		&i.UserNickname,
+		&i.UserFullname,
+		&i.UserAvatar,
+		&i.UserMobile,
+		&i.UserGender,
+		&i.UserBirthday,
 	)
 	return i, err
 }

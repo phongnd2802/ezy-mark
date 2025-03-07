@@ -27,7 +27,13 @@ func RequestMetadataMiddleware() fiber.Handler {
 		}
 
 		clientIP = strings.Split(clientIP, ",")[0]
-
+		
+		if userAgent == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "User-Agent header is required",
+			})
+		}
+		
 		ctx := context.WithValue(c.UserContext(), UserAgentKey, userAgent)
 		ctx = context.WithValue(ctx, ClientIPKey, clientIP)
 

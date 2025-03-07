@@ -5,23 +5,30 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/phongnd2802/ezy-mark/internal/cache"
-	"github.com/phongnd2802/ezy-mark/internal/consts"
 	"github.com/phongnd2802/ezy-mark/internal/db"
-	"github.com/phongnd2802/ezy-mark/internal/dtos"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/middlewares"
+	"github.com/phongnd2802/ezy-mark/internal/models"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/crypto"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/random"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/utils"
 	"github.com/phongnd2802/ezy-mark/internal/response"
+	"github.com/phongnd2802/ezy-mark/internal/services"
 	"github.com/phongnd2802/ezy-mark/internal/worker"
 	"github.com/rs/zerolog/log"
+)
+
+const (
+	OTP_EXPIRATION        = 60
+	ACCESS_TOKEN_TIME_EX  = "1h"
+	REFRESH_TOKEN_TIME_EX = "168h"
 )
 
 type authServiceImpl struct {
@@ -30,7 +37,7 @@ type authServiceImpl struct {
 	distributor worker.TaskDistributor
 }
 
-func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) (code int, res *dtos.LoginResponse, err error) {
+func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest) (code int, res *models.LoginResponse, err error) {
 	// Check Email
 	userFound, err := s.store.GetUserBaseByEmail(ctx, params.Email)
 	if err != nil {
@@ -50,15 +57,40 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 		return response.ErrCodeAccountNotVerified, nil, nil
 	}
 
-	// Generate Access Token and Refresh Token
+	// Create UUID User
 	subToken := utils.GenerateCliTokenUUID(userFound.UserID)
-	log.Info().Str("subToken", subToken).Msg("Generate subToken")
+	log.Info().
+		Str("subToken", subToken).
+		Str("email", userFound.UserEmail).
+		Int64("userID", userFound.UserID).
+		Msg("User logged in")
 
-	accessToken, err := token.CreateToken(subToken, "1h")
+	// Get UserProfile Profile
+	profileUser, err := s.store.GetUserProfile(ctx, userFound.UserID)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
-	refreshToken, err := token.CreateToken(subToken, "168h")
+
+	// Convert to Json
+	profileUserJson, err := sonic.Marshal(profileUser)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	// Give profileUserJson to redsi with key = subToken
+	duration, _ := time.ParseDuration(ACCESS_TOKEN_TIME_EX)
+
+	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+
+	// Generate AccessToken and RefreshToken
+	accessToken, err := token.CreateToken(subToken, ACCESS_TOKEN_TIME_EX)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	refreshToken, err := token.CreateToken(subToken, REFRESH_TOKEN_TIME_EX)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
@@ -66,8 +98,8 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 	// Update State Login
 	userAgent, _ := ctx.Value(middlewares.UserAgentKey).(string)
 	clientIP, _ := ctx.Value(middlewares.ClientIPKey).(string)
-	go func(ctx context.Context) {
-		newCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	go func() {
+		newCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		_, err := s.store.CreateUserSession(newCtx, db.CreateUserSessionParams{
 			SessionID:    uuid.New(),
@@ -84,15 +116,15 @@ func (s *authServiceImpl) Login(ctx context.Context, params *dtos.LoginRequest) 
 		if err != nil {
 			log.Error().AnErr("errUpdateLogin", err)
 		}
-	}(ctx)
+	}()
 
-	return response.ErrCodeSuccess, &dtos.LoginResponse{
+	return response.ErrCodeSuccess, &models.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
 
-func (s *authServiceImpl) VerifyOTP(ctx context.Context, params *dtos.VerifyOTPReq) (int, *dtos.VerifyOTPRes, error) {
+func (s *authServiceImpl) VerifyOTP(ctx context.Context, params *models.VerifyOTPReq) (int, *models.VerifyOTPRes, error) {
 	userKeyOtp := helpers.GetUserKeyOtp(params.Token)
 	userKeySession := helpers.GetUserKeySession(params.Token)
 	exists, err := s.cache.Exists(ctx, userKeySession)
@@ -112,7 +144,7 @@ func (s *authServiceImpl) VerifyOTP(ctx context.Context, params *dtos.VerifyOTPR
 		if err != nil {
 			return response.ErrCodeInternalServer, nil, err
 		}
-		return response.ErrCodeOtpDoesNotMatch, &dtos.VerifyOTPRes{
+		return response.ErrCodeOtpDoesNotMatch, &models.VerifyOTPRes{
 			TTL: int(ttl.Seconds()),
 		}, nil
 	}
@@ -140,7 +172,7 @@ func (s *authServiceImpl) VerifyOTP(ctx context.Context, params *dtos.VerifyOTPR
 	return response.ErrCodeSuccess, nil, nil
 }
 
-func (s *authServiceImpl) Register(ctx context.Context, params *dtos.RegisterRequest) (int, *dtos.RegisterResponse, error) {
+func (s *authServiceImpl) Register(ctx context.Context, params *models.RegisterRequest) (int, *models.RegisterResponse, error) {
 	// Hash email
 	hashEmail := crypto.GetHash(params.Email)
 	log.Info().Str("HashEmail", hashEmail)
@@ -157,7 +189,7 @@ func (s *authServiceImpl) Register(ctx context.Context, params *dtos.RegisterReq
 			return response.ErrCodeInternalServer, nil, err
 		}
 		if state := cache.CheckTTL(ttl); state == cache.TTLHasValue {
-			return response.ErrCodePendingVerification, &dtos.RegisterResponse{
+			return response.ErrCodePendingVerification, &models.RegisterResponse{
 				Token: hashEmail,
 			}, nil
 		}
@@ -188,12 +220,12 @@ func (s *authServiceImpl) Register(ctx context.Context, params *dtos.RegisterReq
 
 	// Store otp to redis
 	userKey := helpers.GetUserKeyOtp(hashEmail)
-	err = s.cache.SetEx(ctx, userKey, newOtp, consts.OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKey, newOtp, OTP_EXPIRATION)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
 	userKeySession := helpers.GetUserKeySession(hashEmail)
-	err = s.cache.SetEx(ctx, userKeySession, newUser.UserID, consts.OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeySession, newUser.UserID, OTP_EXPIRATION)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
@@ -215,12 +247,12 @@ func (s *authServiceImpl) Register(ctx context.Context, params *dtos.RegisterReq
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-	return response.ErrCodeSuccess, &dtos.RegisterResponse{
+	return response.ErrCodeSuccess, &models.RegisterResponse{
 		Token: hashEmail,
 	}, nil
 }
 
-func (s *authServiceImpl) GetTTLOtp(ctx context.Context, token string) (int, *dtos.VerifyOTPRes, error) {
+func (s *authServiceImpl) GetTTLOtp(ctx context.Context, token string) (int, *models.VerifyOTPRes, error) {
 	userKeyOtp := helpers.GetUserKeyOtp(token)
 	ttl, err := s.cache.TTL(ctx, userKeyOtp)
 	if err != nil {
@@ -229,10 +261,10 @@ func (s *authServiceImpl) GetTTLOtp(ctx context.Context, token string) (int, *dt
 	if ttl < 0 {
 		return response.ErrCodeExpiredSession, nil, nil
 	}
-	return response.ErrCodeSuccess, &dtos.VerifyOTPRes{TTL: int(ttl.Seconds())}, nil
+	return response.ErrCodeSuccess, &models.VerifyOTPRes{TTL: int(ttl.Seconds())}, nil
 }
 
-func (s *authServiceImpl) ResendOTP(ctx context.Context, params *dtos.ResendOTPReq) (int, error) {
+func (s *authServiceImpl) ResendOTP(ctx context.Context, params *models.ResendOTPReq) (int, error) {
 	tokenFound, err := s.store.GetUserByUserHash(ctx, params.Token)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -245,13 +277,13 @@ func (s *authServiceImpl) ResendOTP(ctx context.Context, params *dtos.ResendOTPR
 	log.Info().Msgf(">>> OTP is: %d", newOtp)
 
 	userKeyOtp := helpers.GetUserKeyOtp(params.Token)
-	err = s.cache.SetEx(ctx, userKeyOtp, newOtp, consts.OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeyOtp, newOtp, OTP_EXPIRATION)
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
 
 	userKeySession := helpers.GetUserKeySession(params.Token)
-	err = s.cache.SetEx(ctx, userKeySession, newOtp, consts.OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeySession, newOtp, OTP_EXPIRATION)
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
@@ -276,6 +308,16 @@ func (s *authServiceImpl) ResendOTP(ctx context.Context, params *dtos.ResendOTPR
 	return response.ErrCodeSuccess, nil
 }
 
+// Logout implements services.IAuthService.
+func (s *authServiceImpl) Logout(ctx context.Context) (code int, err error) {
+	panic("unimplemented")
+}
+
+// RefreshToken implements services.IAuthService.
+func (s *authServiceImpl) RefreshToken(ctx context.Context) (code int, res *models.LoginResponse, err error) {
+	panic("unimplemented")
+}
+
 func NewAuthServiceImpl(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *authServiceImpl {
 	return &authServiceImpl{
 		store:       store,
@@ -283,3 +325,5 @@ func NewAuthServiceImpl(store db.Store, cache cache.Cache, distributor worker.Ta
 		distributor: distributor,
 	}
 }
+
+var _ services.IAuthService = (*authServiceImpl)(nil)
