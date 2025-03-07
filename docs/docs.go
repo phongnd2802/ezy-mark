@@ -43,7 +43,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.ResendOTPReq"
+                            "$ref": "#/definitions/models.ResendOTPReq"
                         }
                     }
                 ],
@@ -77,7 +77,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.LoginRequest"
+                            "$ref": "#/definitions/models.LoginRequest"
                         }
                     }
                 ],
@@ -111,7 +111,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.RegisterRequest"
+                            "$ref": "#/definitions/models.RegisterRequest"
                         }
                     }
                 ],
@@ -175,7 +175,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dtos.VerifyOTPReq"
+                            "$ref": "#/definitions/models.VerifyOTPReq"
                         }
                     }
                 ],
@@ -188,10 +188,66 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/user/get-info": {
+            "get": {
+                "description": "Fetch the authenticated user's profile information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserInfo Management"
+                ],
+                "summary": "Retrieve User Information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UserProfile"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "dtos.LoginRequest": {
+        "models.LoginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -202,7 +258,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dtos.RegisterRequest": {
+        "models.RegisterRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -213,7 +269,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dtos.ResendOTPReq": {
+        "models.ResendOTPReq": {
             "type": "object",
             "properties": {
                 "token": {
@@ -221,7 +277,30 @@ const docTemplate = `{
                 }
             }
         },
-        "dtos.VerifyOTPReq": {
+        "models.UserProfile": {
+            "type": "object",
+            "properties": {
+                "user_avatar": {
+                    "type": "string"
+                },
+                "user_birthday": {
+                    "type": "string"
+                },
+                "user_fullname": {
+                    "type": "string"
+                },
+                "user_gender": {
+                    "type": "boolean"
+                },
+                "user_mobile": {
+                    "type": "string"
+                },
+                "user_nickname": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.VerifyOTPReq": {
             "type": "object",
             "properties": {
                 "otp": {

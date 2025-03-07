@@ -7,8 +7,8 @@ type UserProfile struct {
 	UserFullname string    `json:"user_fullname" form:"user_fullname"`
 	UserAvatar   string    `json:"user_avatar" form:"user_avatar"`
 	UserMobile   string    `json:"user_mobile" form:"user_mobile"`
-	UserGender   bool      `json:"user_gender" form:"user_gender"`
-	UserBirthday time.Time `json:"user_birthday" form:"user_birthday"`
+	UserGender   *bool      `json:"user_gender" form:"user_gender"`
+	UserBirthday *time.Time `json:"user_birthday" form:"user_birthday"`
 }
 
 type UpdateProfileUserReq struct {
@@ -24,3 +24,7 @@ type ChangePassword struct {
 	ConfirmPassword string `json:"confirm_password"`
 }
 
+type GetProfileParams struct {
+	UserId   int64
+	SubToken string
+}

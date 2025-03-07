@@ -1,25 +1,40 @@
 basePath: /api/v1
 definitions:
-  dtos.LoginRequest:
+  models.LoginRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  dtos.RegisterRequest:
+  models.RegisterRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  dtos.ResendOTPReq:
+  models.ResendOTPReq:
     properties:
       token:
         type: string
     type: object
-  dtos.VerifyOTPReq:
+  models.UserProfile:
+    properties:
+      user_avatar:
+        type: string
+      user_birthday:
+        type: string
+      user_fullname:
+        type: string
+      user_gender:
+        type: boolean
+      user_mobile:
+        type: string
+      user_nickname:
+        type: string
+    type: object
+  models.VerifyOTPReq:
     properties:
       otp:
         type: string
@@ -59,7 +74,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dtos.ResendOTPReq'
+          $ref: '#/definitions/models.ResendOTPReq'
       produces:
       - application/json
       responses:
@@ -81,7 +96,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dtos.LoginRequest'
+          $ref: '#/definitions/models.LoginRequest'
       produces:
       - application/json
       responses:
@@ -103,7 +118,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dtos.RegisterRequest'
+          $ref: '#/definitions/models.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -145,7 +160,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dtos.VerifyOTPReq'
+          $ref: '#/definitions/models.VerifyOTPReq'
       produces:
       - application/json
       responses:
@@ -156,4 +171,38 @@ paths:
       summary: User Verify OTP
       tags:
       - Authentication Management
+  /user/get-info:
+    get:
+      consumes:
+      - application/json
+      description: Fetch the authenticated user's profile information.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserProfile'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Retrieve User Information
+      tags:
+      - UserInfo Management
 swagger: "2.0"

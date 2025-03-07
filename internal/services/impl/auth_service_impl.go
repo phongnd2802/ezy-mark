@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	OTP_EXPIRATION        = 60
-	ACCESS_TOKEN_TIME_EX  = "1h"
-	REFRESH_TOKEN_TIME_EX = "168h"
+	OTP_EXPIRATION        int64 = 60
+	ACCESS_TOKEN_TIME_EX  string = "1h"
+	REFRESH_TOKEN_TIME_EX string = "168h"
 )
 
 type authServiceImpl struct {

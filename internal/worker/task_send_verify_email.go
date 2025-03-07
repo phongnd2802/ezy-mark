@@ -2,10 +2,10 @@ package worker
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 
+	"github.com/bytedance/sonic"
 	"github.com/hibiken/asynq"
 )
 
@@ -23,7 +23,7 @@ func (distributor *redisTaskDistributor) DistributeTaskSendVerifyEmail(
 	opts ...asynq.Option,
 ) error {
 
-	jsonPayload, err := json.Marshal(payload)
+	jsonPayload, err := sonic.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal task payload: %w", err)
 	}
@@ -40,7 +40,7 @@ func (distributor *redisTaskDistributor) DistributeTaskSendVerifyEmail(
 // ProcessTaskSendVerifyEmail implements TaskProcessor.
 func (processor *redisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error {
 	var payload PayloadSendVerifyEmail
-	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+	if err := sonic.Unmarshal(task.Payload(), &payload); err != nil {
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 

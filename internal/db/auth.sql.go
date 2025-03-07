@@ -192,13 +192,14 @@ func (q *Queries) GetUserByUserHash(ctx context.Context, userHash string) (UserB
 }
 
 const getUserProfile = `-- name: GetUserProfile :one
-SELECT "user_email", "user_nickname", "user_fullname", 
+SELECT "user_id", "user_email", "user_nickname", "user_fullname", 
 "user_avatar", "user_mobile", "user_gender", "user_birthday"
 FROM "user_profile"
 WHERE "user_id" = $1
 `
 
 type GetUserProfileRow struct {
+	UserID       int64       `json:"user_id"`
 	UserEmail    string      `json:"user_email"`
 	UserNickname string      `json:"user_nickname"`
 	UserFullname pgtype.Text `json:"user_fullname"`
@@ -212,6 +213,7 @@ func (q *Queries) GetUserProfile(ctx context.Context, userID int64) (GetUserProf
 	row := q.db.QueryRow(ctx, getUserProfile, userID)
 	var i GetUserProfileRow
 	err := row.Scan(
+		&i.UserID,
 		&i.UserEmail,
 		&i.UserNickname,
 		&i.UserFullname,

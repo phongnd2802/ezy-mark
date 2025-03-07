@@ -34,6 +34,7 @@ func initRouter() *fiber.App {
 
 	userRouter := routes.RouterGroupApp.User
 	userRouter.InitAuthRoute(v1)
+	userRouter.InitUserRouter(v1)
 
 	return app
 }

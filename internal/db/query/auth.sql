@@ -46,7 +46,7 @@ FROM "user_base"
 WHERE "user_hash" = $1;
 
 -- name: GetUserProfile :one
-SELECT "user_email", "user_nickname", "user_fullname", 
+SELECT "user_id", "user_email", "user_nickname", "user_fullname", 
 "user_avatar", "user_mobile", "user_gender", "user_birthday"
 FROM "user_profile"
 WHERE "user_id" = $1;

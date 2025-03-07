@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"os"
+	"time"
 
 	"github.com/phongnd2802/ezy-mark/internal/config"
 	"github.com/phongnd2802/ezy-mark/internal/global"
@@ -16,7 +17,10 @@ func loadConfig() {
 	}
 
 	if cfg.Mode == "development" {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+		log.Logger = log.Output(zerolog.ConsoleWriter{
+			Out: os.Stderr,
+			TimeFormat: time.RFC3339,
+		})
 	}
 
 	log.Info().Msg("Loading config...")

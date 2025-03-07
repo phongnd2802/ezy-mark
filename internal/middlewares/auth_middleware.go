@@ -1,11 +1,9 @@
 package middlewares
 
 import (
-	"context"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
-	"github.com/rs/zerolog/log"
+	"github.com/phongnd2802/ezy-mark/internal/response"
 )
 
 func AuthenticationMiddleware() fiber.Handler {
@@ -13,25 +11,23 @@ func AuthenticationMiddleware() fiber.Handler {
 		// Check headers authorization
 		jwtToken, exist := token.ExtractBearerToken(c)
 		if !exist {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "unauthorized",
+			return c.Status(fiber.StatusUnauthorized).JSON(response.Response{
+				Code:    401,
+				Message: "unauthorized",
 			})
 		}
 
 		// validate jwt token by subject
 		claims, err := token.VerifyTokenSubject(jwtToken)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "invalid token",
+			return c.Status(fiber.StatusUnauthorized).JSON(response.Response{
+				Code:    401,
+				Message: "invalid token",
 			})
 		}
 
-		// update claims to context
-		log.Info().Str("claims::: UUID::", claims.Subject).Msg("Authenticated user")
-
-		ctx := context.WithValue(c.UserContext(), "subjectUUID", claims.Subject)
-		c.SetUserContext(ctx)
-
+		// Store user ID in request context
+		c.Locals("subjectUUID", claims.Subject)
 		return c.Next()
 	}
 }

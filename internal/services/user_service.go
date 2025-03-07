@@ -9,11 +9,11 @@ import (
 type (
 	// IUserInfo contains methods for users to update their personal information
 	IUserInfo interface {
+		GetUserProfile(ctx context.Context, params *models.GetProfileParams) (code int, res *models.UserProfile, err error)
 		UpdateUserProfile(ctx context.Context, params *models.UpdateProfileUserReq) (code int, res *models.UpdateProfileUserRes, err error)
 		ChangePassword(ctx context.Context, params *models.ChangePassword) (code int, err error)
 	}
 
-	
 	// IUserAdmin contains methods for administrators to manage user accounts
 	IUserAdmin interface {
 		BlockUser(ctx context.Context) error
@@ -22,10 +22,9 @@ type (
 )
 
 var (
-	localUserInfo IUserInfo
+	localUserInfo  IUserInfo
 	localUserAdmin IUserAdmin
 )
-
 
 func UserInfo() IUserInfo {
 	if localUserInfo == nil {
@@ -34,13 +33,9 @@ func UserInfo() IUserInfo {
 	return localUserInfo
 }
 
-
 func InitUserInfo(i IUserInfo) {
 	localUserInfo = i
 }
-
-
-
 
 func UserAdmin() IUserAdmin {
 	if localUserAdmin == nil {
@@ -53,4 +48,3 @@ func UserAdmin() IUserAdmin {
 func InitUserAdmin(i IUserAdmin) {
 	localUserAdmin = i
 }
-

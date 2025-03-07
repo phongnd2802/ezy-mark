@@ -21,5 +21,5 @@ func initServiceInterfaces() {
 	distributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	services.InitAuthService(impl.NewAuthServiceImpl(store, cache, distributor))
-	
+	services.InitUserInfo(impl.NewUserInfoImpl(store, cache))
 }

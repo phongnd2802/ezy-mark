@@ -118,7 +118,3 @@ func (c *authController) ResendOTP(ctx *fiber.Ctx) error {
 	}
 	return response.SuccessResponse(ctx, code, nil)
 }
-
-func (c *authController) GetInfo(ctx *fiber.Ctx) error {
-	return response.SuccessResponse(ctx, response.ErrCodeSuccess, nil)
-}

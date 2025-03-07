@@ -2,13 +2,19 @@ package cache
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/redis/go-redis/v9"
 )
 
+var ErrCacheMiss = errors.New("cache key not found")
+
 type Cache interface {
 	Get(ctx context.Context, key string) (string, error)
+	GetObj(ctx context.Context, key string, obj interface{}) error
 	Set(ctx context.Context, key string, value interface{}) error
 	SetEx(ctx context.Context, key string, value interface{}, expirationTimeSecond int64) error
 	TTL(ctx context.Context, key string) (time.Duration, error)
@@ -18,6 +24,22 @@ type Cache interface {
 
 type redisCache struct {
 	client *redis.Client
+}
+
+// GetObj implements Cache.
+func (r *redisCache) GetObj(ctx context.Context, key string, obj interface{}) error {
+	result, err := r.client.Get(ctx, key).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return fmt.Errorf("%w: %s", ErrCacheMiss, key)
+		}
+		return err
+	}
+	// convert result to obj
+	if err := sonic.Unmarshal(result, obj); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Exists implements Cache.
