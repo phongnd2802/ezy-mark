@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"errors"
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -54,7 +56,7 @@ func (c *cUserInfo) GetUserProfile(ctx *fiber.Ctx) error {
 // @Param user_mobile formData string false "User Mobile Number"
 // @Param user_gender formData string false "User Gender (male, female, other)"
 // @Param user_birthday formData string false "User Birthday (YYYY-MM-DD)"
-// @Param user_avatar formData file false "User Avatar File"
+// @Param user_avatar formData file false "User Avatar File (Only images: jpg, jpeg, png)"
 // @Success 200 {object} response.Response{data=models.UpdateProfileUserRes} "Profile updated successfully"
 // @Failure 400 {object} response.Response "Invalid parameters"
 // @Failure 401 {object} response.Response "Unauthorized"
@@ -81,7 +83,32 @@ func (c *cUserInfo) UpdateUserProfile(ctx *fiber.Ctx) error {
 	if err != nil && err != fasthttp.ErrMissingFile {
 		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
 	}
-	params.UserAvatar = file
+	if file != nil {
+		allowedTypes := map[string]bool{
+			"image/jpeg": true,
+			"image/jpg": true,
+			"image/png":  true,
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
+		}
+		defer src.Close()
+
+		buffer := make([]byte, 512)
+		_, err = src.Read(buffer)
+		if err != nil {
+			return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
+		}
+
+		fileType := http.DetectContentType(buffer)
+		if !allowedTypes[fileType] {
+			return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, errors.New("only image files (jpg, jpeg, png) are allowed"))
+		}
+
+		params.UserAvatar = file
+	}
 
 	// Get UserID
 	userId, _ := context.GetUserIdFromUUID(ctx)
@@ -91,6 +118,7 @@ func (c *cUserInfo) UpdateUserProfile(ctx *fiber.Ctx) error {
 	subToken, _ := context.GetSubjectUUID(ctx)
 	params.SubToken = subToken
 
+	// Call Service to Update User Profile
 	code, data, err := services.UserInfo().UpdateUserProfile(ctx.UserContext(), params)
 	if err != nil {
 		return response.ErrorResponse(ctx, code, err)

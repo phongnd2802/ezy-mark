@@ -309,7 +309,7 @@ paths:
         in: formData
         name: user_birthday
         type: string
-      - description: User Avatar File
+      - description: 'User Avatar File (Only images: jpg, jpeg, png)'
         in: formData
         name: user_avatar
         type: file

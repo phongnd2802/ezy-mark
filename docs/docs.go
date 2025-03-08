@@ -387,7 +387,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "file",
-                        "description": "User Avatar File",
+                        "description": "User Avatar File (Only images: jpg, jpeg, png)",
                         "name": "user_avatar",
                         "in": "formData"
                     }
