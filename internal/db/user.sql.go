@@ -19,14 +19,14 @@ WHERE "user_id" = $1
 `
 
 type GetUserProfileRow struct {
-	UserID       int64       `json:"user_id"`
-	UserEmail    string      `json:"user_email"`
-	UserNickname string      `json:"user_nickname"`
-	UserFullname pgtype.Text `json:"user_fullname"`
-	UserAvatar   pgtype.Text `json:"user_avatar"`
-	UserMobile   pgtype.Text `json:"user_mobile"`
-	UserGender   pgtype.Bool `json:"user_gender"`
-	UserBirthday pgtype.Date `json:"user_birthday"`
+	UserID       int64          `json:"user_id"`
+	UserEmail    string         `json:"user_email"`
+	UserNickname string         `json:"user_nickname"`
+	UserFullname pgtype.Text    `json:"user_fullname"`
+	UserAvatar   pgtype.Text    `json:"user_avatar"`
+	UserMobile   pgtype.Text    `json:"user_mobile"`
+	UserGender   NullGenderEnum `json:"user_gender"`
+	UserBirthday pgtype.Date    `json:"user_birthday"`
 }
 
 func (q *Queries) GetUserProfile(ctx context.Context, userID int64) (GetUserProfileRow, error) {
@@ -60,13 +60,13 @@ RETURNING user_id, user_email, user_nickname, user_fullname, user_avatar, user_m
 `
 
 type UpdateUserProfileParams struct {
-	UserNickname string      `json:"user_nickname"`
-	UserFullname pgtype.Text `json:"user_fullname"`
-	UserAvatar   pgtype.Text `json:"user_avatar"`
-	UserMobile   pgtype.Text `json:"user_mobile"`
-	UserGender   pgtype.Bool `json:"user_gender"`
-	UserBirthday pgtype.Date `json:"user_birthday"`
-	UserID       int64       `json:"user_id"`
+	UserNickname string         `json:"user_nickname"`
+	UserFullname pgtype.Text    `json:"user_fullname"`
+	UserAvatar   pgtype.Text    `json:"user_avatar"`
+	UserMobile   pgtype.Text    `json:"user_mobile"`
+	UserGender   NullGenderEnum `json:"user_gender"`
+	UserBirthday pgtype.Date    `json:"user_birthday"`
+	UserID       int64          `json:"user_id"`
 }
 
 func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error) {

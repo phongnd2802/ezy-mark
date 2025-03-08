@@ -42,19 +42,19 @@ services:
     networks:
       - ezy-mark-network
 
-  mc-init:
-    container_name: mc_init
-    image: minio/mc
-    entrypoint: |
-      /bin/bash -c "
-      sleep 5;
-      /usr/bin/mc config --quiet host add dmlminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb --quiet dmlminio/movies;
-      "
-    depends_on:
-      - minio
-    networks:
-      - ezy-mark-network
+  # mc-init:
+  #   container_name: mc_init
+  #   image: minio/mc
+  #   entrypoint: |
+  #     /bin/bash -c "
+  #     sleep 5;
+  #     /usr/bin/mc config --quiet host add dmlminio http://minio:9000 minioadmin minioadmin;
+  #     /usr/bin/mc mb --quiet dmlminio/movies;
+  #     "
+  #   depends_on:
+  #     - minio
+  #   networks:
+  #     - ezy-mark-network
 
 
 networks:

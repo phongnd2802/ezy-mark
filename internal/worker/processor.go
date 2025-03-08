@@ -16,6 +16,7 @@ const (
 type TaskProcessor interface {
 	Start() error
 	ProcessTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error
+	ProcessTaskRemoveOldAvatar(ctx context.Context, task *asynq.Task) error
 }
 
 type redisTaskProcessor struct {
@@ -23,11 +24,12 @@ type redisTaskProcessor struct {
 	sender email.EmailSender
 }
 
+
 // Start implements TaskProcessor.
 func (processor *redisTaskProcessor) Start() error {
 	mux := asynq.NewServeMux()
 	mux.HandleFunc(TaskSendVerifyEmail, processor.ProcessTaskSendVerifyEmail)
-
+	mux.HandleFunc(TaskRemoveOldAvatar, processor.ProcessTaskRemoveOldAvatar)
 	return processor.server.Start(mux)
 }
 

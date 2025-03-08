@@ -6,6 +6,7 @@ func Run() *fiber.App {
 	loadConfig()
 	initDatabase()
 	initRedis()
+	initMinIO()
 	initServiceInterfaces()
 
 	app := initRouter()

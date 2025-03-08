@@ -11,6 +11,11 @@ type Config struct {
 	SenderEmail    string `mapstructure:"SENDER_EMAIL"`
 	SenderPassword string `mapstructure:"SENDER_PASSWORD"`
 	SecretKeyJWT   string `mapstructure:"SECRET_KEY_JWT"`
+	MinIOEndPoint  string `mapstructure:"MINIO_ENDPOINT"`
+	MinIOAccessKey string `mapstructure:"MINIO_ACCESS_KEY"`
+	MinIOSecretKey string `mapstructure:"MINIO_SECRET_KEY"`
+	MinIOUseSSL    bool   `mapstructure:"MINIO_USE_SSL"`
+	MinIOHost      string `mapstructure:"MINIO_HOST"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

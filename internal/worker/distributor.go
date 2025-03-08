@@ -12,6 +12,12 @@ type TaskDistributor interface {
 		payload *PayloadSendVerifyEmail,
 		opts ...asynq.Option,
 	) error
+
+	DistributeTaskRemoveOldAvatar(
+		ctx context.Context,
+		payload *PayloadRemoveOldAvatar,
+		opts ...asynq.Option,
+	) error
 }
 
 type redisTaskDistributor struct {

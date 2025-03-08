@@ -12,6 +12,7 @@ func (r *UserRouter) InitUserRouter(Router fiber.Router) {
 	userRouter := Router.Group("/user")
 	userRouter.Use(middlewares.AuthenticationMiddleware())
 	{
+		userRouter.Patch("/update-info", controllers.UserInfo.UpdateUserProfile)
 		userRouter.Get("/get-info", controllers.UserInfo.GetUserProfile)
 	}
 }

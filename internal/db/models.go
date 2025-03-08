@@ -5,10 +5,55 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type GenderEnum string
+
+const (
+	GenderEnumMale   GenderEnum = "male"
+	GenderEnumFemale GenderEnum = "female"
+	GenderEnumOther  GenderEnum = "other"
+)
+
+func (e *GenderEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GenderEnum(s)
+	case string:
+		*e = GenderEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GenderEnum: %T", src)
+	}
+	return nil
+}
+
+type NullGenderEnum struct {
+	GenderEnum GenderEnum `json:"gender_enum"`
+	Valid      bool       `json:"valid"` // Valid is true if GenderEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGenderEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.GenderEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GenderEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGenderEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GenderEnum), nil
+}
 
 type UserBase struct {
 	UserID       int64       `json:"user_id"`
@@ -23,16 +68,16 @@ type UserBase struct {
 }
 
 type UserProfile struct {
-	UserID       int64       `json:"user_id"`
-	UserEmail    string      `json:"user_email"`
-	UserNickname string      `json:"user_nickname"`
-	UserFullname pgtype.Text `json:"user_fullname"`
-	UserAvatar   pgtype.Text `json:"user_avatar"`
-	UserMobile   pgtype.Text `json:"user_mobile"`
-	UserGender   pgtype.Bool `json:"user_gender"`
-	UserBirthday pgtype.Date `json:"user_birthday"`
-	CreatedAt    time.Time   `json:"created_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
+	UserID       int64          `json:"user_id"`
+	UserEmail    string         `json:"user_email"`
+	UserNickname string         `json:"user_nickname"`
+	UserFullname pgtype.Text    `json:"user_fullname"`
+	UserAvatar   pgtype.Text    `json:"user_avatar"`
+	UserMobile   pgtype.Text    `json:"user_mobile"`
+	UserGender   NullGenderEnum `json:"user_gender"`
+	UserBirthday pgtype.Date    `json:"user_birthday"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type UserSession struct {

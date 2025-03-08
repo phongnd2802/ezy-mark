@@ -4,9 +4,8 @@ GOOSE_DRIVER ?= postgres
 
 
 
-server:
+dev:
 	@go run cmd/server/main.go
-
 
 docker-up:
 	@docker-compose -f environment/docker-compose-dev.yml up

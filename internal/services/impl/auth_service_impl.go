@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/phongnd2802/ezy-mark/internal/cache"
+	"github.com/phongnd2802/ezy-mark/internal/consts"
 	"github.com/phongnd2802/ezy-mark/internal/db"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/middlewares"
@@ -22,12 +23,6 @@ import (
 	"github.com/phongnd2802/ezy-mark/internal/services"
 	"github.com/phongnd2802/ezy-mark/internal/worker"
 	"github.com/rs/zerolog/log"
-)
-
-const (
-	OTP_EXPIRATION        int64  = 60
-	ACCESS_TOKEN_TIME_EX  string = "1h"
-	REFRESH_TOKEN_TIME_EX string = "168h"
 )
 
 type authServiceImpl struct {
@@ -77,7 +72,7 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 	}
 
 	// Give profileUserJson and access_token to redis with key = subToken
-	duration, _ := time.ParseDuration(ACCESS_TOKEN_TIME_EX)
+	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
 
 	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
 	if err != nil {
@@ -85,11 +80,11 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 	}
 
 	// Generate AccessToken and RefreshToken
-	accessToken, err := token.CreateToken(subToken, ACCESS_TOKEN_TIME_EX)
+	accessToken, err := token.CreateToken(subToken, consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
-	refreshToken, err := token.CreateToken(subToken, REFRESH_TOKEN_TIME_EX)
+	refreshToken, err := token.CreateToken(subToken, consts.JWT_REFRESH_TOKEN_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
@@ -220,12 +215,12 @@ func (s *authServiceImpl) Register(ctx context.Context, params *models.RegisterR
 
 	// Store otp to redis
 	userKey := helpers.GetUserKeyOtp(hashEmail)
-	err = s.cache.SetEx(ctx, userKey, newOtp, OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKey, newOtp, consts.OTP_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
 	userKeySession := helpers.GetUserKeySession(hashEmail)
-	err = s.cache.SetEx(ctx, userKeySession, newUser.UserID, OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeySession, newUser.UserID, consts.OTP_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
@@ -277,13 +272,13 @@ func (s *authServiceImpl) ResendOTP(ctx context.Context, params *models.ResendOT
 	log.Info().Msgf(">>> OTP is: %d", newOtp)
 
 	userKeyOtp := helpers.GetUserKeyOtp(params.Token)
-	err = s.cache.SetEx(ctx, userKeyOtp, newOtp, OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeyOtp, newOtp, consts.OTP_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
 
 	userKeySession := helpers.GetUserKeySession(params.Token)
-	err = s.cache.SetEx(ctx, userKeySession, newOtp, OTP_EXPIRATION)
+	err = s.cache.SetEx(ctx, userKeySession, newOtp, consts.OTP_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
@@ -369,7 +364,7 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, params *models.Refre
 	}
 
 	// Give profileUserJson and access_token to redis with key = subToken
-	duration, _ := time.ParseDuration(ACCESS_TOKEN_TIME_EX)
+	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
 
 	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
 	if err != nil {
@@ -377,11 +372,11 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, params *models.Refre
 	}
 
 	// Generate AccessToken and RefreshToken
-	accessToken, err := token.CreateToken(subToken, ACCESS_TOKEN_TIME_EX)
+	accessToken, err := token.CreateToken(subToken, consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
-	refreshToken, err := token.CreateToken(subToken, REFRESH_TOKEN_TIME_EX)
+	refreshToken, err := token.CreateToken(subToken, consts.JWT_REFRESH_TOKEN_EXPIRED_TIME)
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
