@@ -49,3 +49,4 @@ next-env.d.ts
 /environment/minio
 /environment/postgres
 frontend
+benchmark

@@ -277,6 +277,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/user/change-password": {
+            "patch": {
+                "description": "Allows users to change their password by providing the old password and the new password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserInfo Management"
+                ],
+                "summary": "Change Password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ChangePassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/user/get-info": {
             "get": {
                 "description": "Fetch the authenticated user's profile information.",
@@ -311,7 +370,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.UserProfile"
+                                            "$ref": "#/definitions/models.UserProfileRes"
                                         }
                                     }
                                 }
@@ -404,7 +463,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/models.UpdateProfileUserRes"
+                                            "$ref": "#/definitions/models.UserProfileRes"
                                         }
                                     }
                                 }
@@ -434,6 +493,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.ChangePassword": {
+            "type": "object",
+            "properties": {
+                "new_password": {
+                    "type": "string"
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
         "models.LoginRequest": {
             "type": "object",
             "properties": {
@@ -464,32 +534,12 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UpdateProfileUserRes": {
+        "models.UserProfileRes": {
             "type": "object",
             "properties": {
                 "user_avatar": {
                     "type": "string"
                 },
-                "user_birthday": {
-                    "type": "string"
-                },
-                "user_fullname": {
-                    "type": "string"
-                },
-                "user_gender": {
-                    "type": "string"
-                },
-                "user_mobile": {
-                    "type": "string"
-                },
-                "user_nickname": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.UserProfile": {
-            "type": "object",
-            "properties": {
                 "user_birthday": {
                     "type": "string"
                 },

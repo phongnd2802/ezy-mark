@@ -14,6 +14,7 @@ import (
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/mapper"
 	"github.com/phongnd2802/ezy-mark/internal/models"
+	"github.com/phongnd2802/ezy-mark/internal/pkg/crypto"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/utils"
 	"github.com/phongnd2802/ezy-mark/internal/response"
 	"github.com/phongnd2802/ezy-mark/internal/services"
@@ -32,12 +33,43 @@ const (
 )
 
 // ChangePassword implements services.IUserInfo.
-func (s *sUserInfo) ChangePassword(ctx context.Context, params *models.ChangePassword) (code int, err error) {
-	panic("unimplemented")
+func (s *sUserInfo) ChangePassword(ctx context.Context, params *models.ChangePassword) (int, error) {
+	// Get User Base
+	userBase, err := s.store.GetUserBaseById(ctx, params.UserId)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+
+	// Check Old Password
+	if !crypto.VerifyPassword(params.OldPassword, userBase.UserPassword) {
+		return response.ErrCodeUnauthorized, errors.New("invalid old password")
+	}
+	
+	// New Password must to be different from the old one
+	if params.OldPassword == params.NewPassword {
+		return response.ErrCodeBadRequest, errors.New("new password must be different from the old one")
+	}
+
+	// Hash New Password
+	hashedPassword, err := crypto.HashPassword(params.NewPassword)
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+
+	// Update Password
+	err = s.store.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
+		UserPassword: hashedPassword,
+		UserID: params.UserId,
+	})
+	if err != nil {
+		return response.ErrCodeInternalServer, err
+	}
+	
+	return response.ErrCodeSuccess, nil
 }
 
 // GetUserProfile implements services.IUserInfo.
-func (s *sUserInfo) GetUserProfile(ctx context.Context, params *models.GetProfileParams) (int, *models.UserProfile, error) {
+func (s *sUserInfo) GetUserProfile(ctx context.Context, params *models.GetProfileParams) (int, *models.UserProfileRes, error) {
 	var userProfile db.GetUserProfileRow
 	err := s.cache.GetObj(ctx, params.SubToken, &userProfile)
 
@@ -62,7 +94,7 @@ func (s *sUserInfo) GetUserProfile(ctx context.Context, params *models.GetProfil
 }
 
 // UpdateUserProfile implements services.IUserInfo.
-func (s *sUserInfo) UpdateUserProfile(ctx context.Context, params *models.UpdateProfileUserReq) (int, *models.UpdateProfileUserRes, error) {
+func (s *sUserInfo) UpdateUserProfile(ctx context.Context, params *models.UpdateUserProfileReq) (int, *models.UserProfileRes, error) {
 	var userBirthday *time.Time
 	if params.UserBirthday != "" {
 		date, _ := time.Parse("2006-01-02", params.UserBirthday)
@@ -142,7 +174,7 @@ func (s *sUserInfo) UpdateUserProfile(ctx context.Context, params *models.Update
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-	return response.ErrCodeSuccess, &models.UpdateProfileUserRes{
+	return response.ErrCodeSuccess, &models.UserProfileRes{
 		UserProfile: models.UserProfile{
 			UserNickname: updatedProfile.UserNickname,
 			UserFullname: updatedProfile.UserFullname.String,

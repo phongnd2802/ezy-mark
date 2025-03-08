@@ -9,8 +9,8 @@ import (
 type (
 	// IUserInfo contains methods for users to update their personal information
 	IUserInfo interface {
-		GetUserProfile(ctx context.Context, params *models.GetProfileParams) (code int, res *models.UserProfile, err error)
-		UpdateUserProfile(ctx context.Context, params *models.UpdateProfileUserReq) (code int, res *models.UpdateProfileUserRes, err error)
+		GetUserProfile(ctx context.Context, params *models.GetProfileParams) (code int, res *models.UserProfileRes, err error)
+		UpdateUserProfile(ctx context.Context, params *models.UpdateUserProfileReq) (code int, res *models.UserProfileRes, err error)
 		ChangePassword(ctx context.Context, params *models.ChangePassword) (code int, err error)
 	}
 

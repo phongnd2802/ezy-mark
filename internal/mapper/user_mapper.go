@@ -5,7 +5,7 @@ import (
 	"github.com/phongnd2802/ezy-mark/internal/models"
 )
 
-func MapUserProfile(dbProfile db.GetUserProfileRow) *models.UserProfile {
+func MapUserProfile(dbProfile db.GetUserProfileRow) *models.UserProfileRes {
 	var userGender *string
 	switch dbProfile.UserGender.GenderEnum {
 	case "male", "female", "other":
@@ -15,11 +15,14 @@ func MapUserProfile(dbProfile db.GetUserProfileRow) *models.UserProfile {
 	}
 
 	userBirthday := dbProfile.UserBirthday.Time.String()
-	return &models.UserProfile{
-		UserNickname: dbProfile.UserNickname,
-		UserFullname: dbProfile.UserFullname.String,
-		UserMobile:   dbProfile.UserMobile.String,
-		UserBirthday: userBirthday,
-		UserGender:   userGender,
+	return &models.UserProfileRes{
+		UserProfile: models.UserProfile{
+			UserNickname: dbProfile.UserNickname,
+			UserFullname: dbProfile.UserFullname.String,
+			UserMobile:   dbProfile.UserMobile.String,
+			UserBirthday: userBirthday,
+			UserGender:   userGender,
+		},
+		UserAvatar: dbProfile.UserAvatar.String,
 	}
 }

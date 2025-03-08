@@ -10,21 +10,22 @@ type UserProfile struct {
 	UserBirthday string  `json:"user_birthday" form:"user_birthday"`
 }
 
-type UpdateProfileUserReq struct {
+type UpdateUserProfileReq struct {
 	UserId int64
 	UserProfile
 	UserAvatar *multipart.FileHeader
 	SubToken   string
 }
 
-type UpdateProfileUserRes struct {
+type UserProfileRes struct {
 	UserAvatar string `json:"user_avatar"`
 	UserProfile
 }
 
 type ChangePassword struct {
-	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirm_password"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+	UserId      int64  `json:"-"`
 }
 
 type GetProfileParams struct {

@@ -4,7 +4,7 @@ package response
 var msg = map[int]string{
 	ErrCodeSuccess: "success",
 	ErrCodeInvalidParams: "invalid params",
-
+	ErrCodeBadRequest: "bad request",
 	// Auth Message
 	ErrCodePendingVerification: "email is being pendding verification",
 	ErrCodeEmailAlreadyExists: "email already exists",
@@ -15,5 +15,6 @@ var msg = map[int]string{
 	ErrCodeTokenInvalid: "invalid token",
 	ErrCodeTokenFlagged: "suspicious activity detected, please reauthenticate.",
 	ErrCodeInternalServer: "internal server error",
+	ErrCodeUnauthorized: "unauthorized",
 }
 

@@ -44,7 +44,9 @@ func (processor *redisTaskProcessor) ProcessTaskRemoveOldAvatar(ctx context.Cont
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	err := global.Minio.RemoveObject(ctx, consts.BucketUserAvatar, payload.ObjectName, minio.RemoveObjectOptions{})
+	err := global.Minio.RemoveObject(ctx, consts.BucketUserAvatar, payload.ObjectName, minio.RemoveObjectOptions{
+		GovernanceBypass: true,
+	})
 	if err != nil {
 		log.Error().Err(err).Str("object_name", payload.ObjectName).Msg("failed to remove old avatar")
 		return err

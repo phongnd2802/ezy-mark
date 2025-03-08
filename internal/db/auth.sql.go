@@ -251,6 +251,29 @@ func (q *Queries) GetUserBaseByEmail(ctx context.Context, userEmail string) (Use
 	return i, err
 }
 
+const getUserBaseById = `-- name: GetUserBaseById :one
+SELECT user_id, user_email, user_hash, user_password, user_otp, is_verified, is_deleted, created_at, updated_at
+FROM "user_base"
+WHERE "user_id" = $1
+`
+
+func (q *Queries) GetUserBaseById(ctx context.Context, userID int64) (UserBase, error) {
+	row := q.db.QueryRow(ctx, getUserBaseById, userID)
+	var i UserBase
+	err := row.Scan(
+		&i.UserID,
+		&i.UserEmail,
+		&i.UserHash,
+		&i.UserPassword,
+		&i.UserOtp,
+		&i.IsVerified,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByUserHash = `-- name: GetUserByUserHash :one
 SELECT user_id, user_email, user_hash, user_password, user_otp, is_verified, is_deleted, created_at, updated_at
 FROM "user_base"
@@ -296,6 +319,22 @@ func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) er
 		arg.SubToken,
 		arg.SessionID,
 	)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE "user_base"
+SET "user_password" = $1, "updated_at" = now()
+WHERE "user_id" = $2
+`
+
+type UpdateUserPasswordParams struct {
+	UserPassword string `json:"user_password"`
+	UserID       int64  `json:"user_id"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.UserPassword, arg.UserID)
 	return err
 }
 

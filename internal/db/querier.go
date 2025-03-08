@@ -21,9 +21,11 @@ type Querier interface {
 	GetSessionByRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (GetSessionByRefreshTokenUsedRow, error)
 	GetSessionBySubToken(ctx context.Context, subToken string) (GetSessionBySubTokenRow, error)
 	GetUserBaseByEmail(ctx context.Context, userEmail string) (UserBase, error)
+	GetUserBaseById(ctx context.Context, userID int64) (UserBase, error)
 	GetUserByUserHash(ctx context.Context, userHash string) (UserBase, error)
 	GetUserProfile(ctx context.Context, userID int64) (GetUserProfileRow, error)
 	UpdateSession(ctx context.Context, arg UpdateSessionParams) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error)
 	UpdateUserVerify(ctx context.Context, userHash string) (UserBase, error)
 }

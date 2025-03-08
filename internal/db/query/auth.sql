@@ -16,6 +16,16 @@ SELECT *
 FROM "user_base"
 WHERE "user_email" = $1;
 
+-- name: GetUserBaseById :one
+SELECT *
+FROM "user_base"
+WHERE "user_id" = $1;
+
+-- name: UpdateUserPassword :exec
+UPDATE "user_base"
+SET "user_password" = $1, "updated_at" = now()
+WHERE "user_id" = $2;
+
 -- name: UpdateUserVerify :one
 UPDATE "user_base"
 SET "is_verified" = true

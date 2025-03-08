@@ -17,6 +17,38 @@ type cUserInfo struct{}
 
 var UserInfo = new(cUserInfo)
 
+
+
+// ChangePassword godoc
+// @Summary      Change Password
+// @Description  Allows users to change their password by providing the old password and the new password.
+// @Tags         UserInfo Management
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer token"
+// @Param        payload body models.ChangePassword true "payload"     
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Failure      401  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /user/change-password [patch]
+func (c *cUserInfo) ChangePassword(ctx *fiber.Ctx) error {
+	params := new(models.ChangePassword)
+	if err := ctx.BodyParser(params); err != nil {
+		return response.ErrorResponse(ctx, response.ErrCodeInvalidParams, err)
+	}
+
+	userId, _ := context.GetUserIdFromUUID(ctx)
+	params.UserId = userId
+
+	code, err := services.UserInfo().ChangePassword(ctx.UserContext(), params)
+	if err != nil {
+		return response.ErrorResponse(ctx, code, err)
+	}
+	return response.SuccessResponse(ctx, response.ErrCodeSuccess, nil)
+}
+
+
 // GetInfo godoc
 // @Summary      Retrieve User Information
 // @Description  Fetch the authenticated user's profile information.
@@ -24,7 +56,7 @@ var UserInfo = new(cUserInfo)
 // @Accept       json
 // @Produce      json
 // @Param        Authorization header string true "Bearer token"
-// @Success      200  {object}  response.Response{data=models.UserProfile}
+// @Success      200  {object}  response.Response{data=models.UserProfileRes}
 // @Failure      401  {object}  response.Response
 // @Failure      500  {object}  response.Response
 // @Router       /user/get-info [get]
@@ -57,13 +89,13 @@ func (c *cUserInfo) GetUserProfile(ctx *fiber.Ctx) error {
 // @Param user_gender formData string false "User Gender (male, female, other)"
 // @Param user_birthday formData string false "User Birthday (YYYY-MM-DD)"
 // @Param user_avatar formData file false "User Avatar File (Only images: jpg, jpeg, png)"
-// @Success 200 {object} response.Response{data=models.UpdateProfileUserRes} "Profile updated successfully"
+// @Success 200 {object} response.Response{data=models.UserProfileRes} "Profile updated successfully"
 // @Failure 400 {object} response.Response "Invalid parameters"
 // @Failure 401 {object} response.Response "Unauthorized"
 // @Failure 500 {object} response.Response "Internal server error"
 // @Router /user/update-info [patch]
 func (c *cUserInfo) UpdateUserProfile(ctx *fiber.Ctx) error {
-	params := new(models.UpdateProfileUserReq)
+	params := new(models.UpdateUserProfileReq)
 
 	// Parse Body
 	if err := ctx.BodyParser(params); err != nil {

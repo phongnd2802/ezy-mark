@@ -1,5 +1,12 @@
 basePath: /api/v1
 definitions:
+  models.ChangePassword:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+    type: object
   models.LoginRequest:
     properties:
       email:
@@ -19,23 +26,10 @@ definitions:
       token:
         type: string
     type: object
-  models.UpdateProfileUserRes:
+  models.UserProfileRes:
     properties:
       user_avatar:
         type: string
-      user_birthday:
-        type: string
-      user_fullname:
-        type: string
-      user_gender:
-        type: string
-      user_mobile:
-        type: string
-      user_nickname:
-        type: string
-    type: object
-  models.UserProfile:
-    properties:
       user_birthday:
         type: string
       user_fullname:
@@ -242,6 +236,46 @@ paths:
       summary: User Verify OTP
       tags:
       - Authentication Management
+  /user/change-password:
+    patch:
+      consumes:
+      - application/json
+      description: Allows users to change their password by providing the old password
+        and the new password.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/models.ChangePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Change Password
+      tags:
+      - UserInfo Management
   /user/get-info:
     get:
       consumes:
@@ -263,7 +297,7 @@ paths:
             - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/models.UserProfile'
+                  $ref: '#/definitions/models.UserProfileRes'
               type: object
         "401":
           description: Unauthorized
@@ -323,7 +357,7 @@ paths:
             - $ref: '#/definitions/response.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/models.UpdateProfileUserRes'
+                  $ref: '#/definitions/models.UserProfileRes'
               type: object
         "400":
           description: Invalid parameters

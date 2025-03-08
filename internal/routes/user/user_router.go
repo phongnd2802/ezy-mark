@@ -13,6 +13,7 @@ func (r *UserRouter) InitUserRouter(Router fiber.Router) {
 	userRouter.Use(middlewares.AuthenticationMiddleware())
 	{
 		userRouter.Patch("/update-info", controllers.UserInfo.UpdateUserProfile)
+		userRouter.Patch("/change-password", controllers.UserInfo.ChangePassword)
 		userRouter.Get("/get-info", controllers.UserInfo.GetUserProfile)
 	}
 }
