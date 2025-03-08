@@ -42,6 +42,24 @@ func (c *cUserInfo) GetUserProfile(ctx *fiber.Ctx) error {
 	return response.SuccessResponse(ctx, code, data)
 }
 
+// UpdateInfo godoc
+// @Summary Update user profile
+// @Description Allows users to update their profile information, including nickname, full name, mobile, gender, birthday, and avatar.
+// @Tags UserInfo Management
+// @Accept multipart/form-data
+// @Produce json
+// @Param        Authorization header string true "Bearer token"
+// @Param user_nickname formData string true "User Nickname"
+// @Param user_fullname formData string false "User Full Name"
+// @Param user_mobile formData string false "User Mobile Number"
+// @Param user_gender formData string false "User Gender (male, female, other)"
+// @Param user_birthday formData string false "User Birthday (YYYY-MM-DD)"
+// @Param user_avatar formData file false "User Avatar File"
+// @Success 200 {object} response.Response{data=models.UpdateProfileUserRes} "Profile updated successfully"
+// @Failure 400 {object} response.Response "Invalid parameters"
+// @Failure 401 {object} response.Response "Unauthorized"
+// @Failure 500 {object} response.Response "Internal server error"
+// @Router /user/update-info [patch]
 func (c *cUserInfo) UpdateUserProfile(ctx *fiber.Ctx) error {
 	params := new(models.UpdateProfileUserReq)
 

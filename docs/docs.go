@@ -332,6 +332,105 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/user/update-info": {
+            "patch": {
+                "description": "Allows users to update their profile information, including nickname, full name, mobile, gender, birthday, and avatar.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "UserInfo Management"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Nickname",
+                        "name": "user_nickname",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Full Name",
+                        "name": "user_fullname",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Mobile Number",
+                        "name": "user_mobile",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Gender (male, female, other)",
+                        "name": "user_gender",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User Birthday (YYYY-MM-DD)",
+                        "name": "user_birthday",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "User Avatar File",
+                        "name": "user_avatar",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UpdateProfileUserRes"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -365,7 +464,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UserProfile": {
+        "models.UpdateProfileUserRes": {
             "type": "object",
             "properties": {
                 "user_avatar": {
@@ -378,7 +477,27 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user_gender": {
-                    "type": "boolean"
+                    "type": "string"
+                },
+                "user_mobile": {
+                    "type": "string"
+                },
+                "user_nickname": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserProfile": {
+            "type": "object",
+            "properties": {
+                "user_birthday": {
+                    "type": "string"
+                },
+                "user_fullname": {
+                    "type": "string"
+                },
+                "user_gender": {
+                    "type": "string"
                 },
                 "user_mobile": {
                     "type": "string"
