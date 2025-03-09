@@ -77,6 +77,25 @@ type RolePermission struct {
 	GrantedAt    time.Time `json:"granted_at"`
 }
 
+type Shop struct {
+	ShopID          int64              `json:"shop_id"`
+	OwnerID         int64              `json:"owner_id"`
+	ShopName        string             `json:"shop_name"`
+	ShopDescription pgtype.Text        `json:"shop_description"`
+	ShopLogo        pgtype.Text        `json:"shop_logo"`
+	ShopPhone       pgtype.Text        `json:"shop_phone"`
+	ShopEmail       string             `json:"shop_email"`
+	ShopAddress     pgtype.Text        `json:"shop_address"`
+	BusinessLicense pgtype.Text        `json:"business_license"`
+	TaxID           pgtype.Text        `json:"tax_id"`
+	IsActive        pgtype.Bool        `json:"is_active"`
+	IsVerified      pgtype.Bool        `json:"is_verified"`
+	VerifiedBy      pgtype.Int8        `json:"verified_by"`
+	VerifiedAt      pgtype.Timestamptz `json:"verified_at"`
+	CreatedAt       time.Time          `json:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+}
+
 type UserBase struct {
 	UserID       int64       `json:"user_id"`
 	UserEmail    string      `json:"user_email"`
