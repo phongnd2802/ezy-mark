@@ -64,14 +64,14 @@ func (s *sUserInfo) ChangePassword(ctx context.Context, params *models.ChangePas
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
-	
+
 	return response.ErrCodeSuccess, nil
 }
 
 // GetUserProfile implements services.IUserInfo.
 func (s *sUserInfo) GetUserProfile(ctx context.Context, params *models.GetProfileParams) (int, *models.UserProfileRes, error) {
 	var userProfile db.GetUserProfileRow
-	err := s.cache.GetObj(ctx, params.SubToken, &userProfile)
+	err := s.cache.GetObj(ctx, helpers.GetUserKeyProfile(params.SubToken), &userProfile)
 
 	// Cache Hit
 	if err == nil {

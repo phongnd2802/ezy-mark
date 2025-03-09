@@ -50,3 +50,4 @@ next-env.d.ts
 /environment/postgres
 frontend
 benchmark
+jmeter.log

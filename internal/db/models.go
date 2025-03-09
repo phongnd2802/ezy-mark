@@ -55,6 +55,28 @@ func (ns NullGenderEnum) Value() (driver.Value, error) {
 	return string(ns.GenderEnum), nil
 }
 
+type Permission struct {
+	PermissionID   int32       `json:"permission_id"`
+	PermissionName string      `json:"permission_name"`
+	Description    pgtype.Text `json:"description"`
+	CreatedAt      time.Time   `json:"created_at"`
+	UpdatedAt      time.Time   `json:"updated_at"`
+}
+
+type Role struct {
+	RoleID      int32       `json:"role_id"`
+	RoleName    string      `json:"role_name"`
+	Description pgtype.Text `json:"description"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
+}
+
+type RolePermission struct {
+	RoleID       int32     `json:"role_id"`
+	PermissionID int32     `json:"permission_id"`
+	GrantedAt    time.Time `json:"granted_at"`
+}
+
 type UserBase struct {
 	UserID       int64       `json:"user_id"`
 	UserEmail    string      `json:"user_email"`
@@ -78,6 +100,12 @@ type UserProfile struct {
 	UserBirthday pgtype.Date    `json:"user_birthday"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
+type UserRole struct {
+	UserID     int64     `json:"user_id"`
+	RoleID     int32     `json:"role_id"`
+	AssignedAt time.Time `json:"assigned_at"`
 }
 
 type UserSession struct {

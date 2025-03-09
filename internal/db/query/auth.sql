@@ -87,3 +87,7 @@ SET "refresh_token" = $1, "refresh_token_used" = $2, "expires_at" = $3, "sub_tok
 WHERE "session_id" = $5;
 
 
+-- name: GetRoleByUserId :many
+SELECT "role_id"
+FROM "user_roles"
+WHERE "user_id" = $1;

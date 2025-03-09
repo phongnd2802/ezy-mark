@@ -10,6 +10,7 @@ import (
 	"github.com/phongnd2802/ezy-mark/internal/pkg/context"
 	"github.com/phongnd2802/ezy-mark/internal/response"
 	"github.com/phongnd2802/ezy-mark/internal/services"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 )
 
@@ -63,7 +64,8 @@ func (c *cUserInfo) ChangePassword(ctx *fiber.Ctx) error {
 func (c *cUserInfo) GetUserProfile(ctx *fiber.Ctx) error {
 	sUUID, _ := context.GetSubjectUUID(ctx)
 	userId, _ := context.GetUserIdFromUUID(ctx)
-
+	roles := ctx.Locals("roles").([]int32)
+	log.Info().Msgf("Roles: %v", roles)
 	params := models.GetProfileParams{
 		UserId:   userId,
 		SubToken: sUUID,

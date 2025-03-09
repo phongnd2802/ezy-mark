@@ -18,6 +18,7 @@ type Querier interface {
 	CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error)
 	DeleteSessionBySubToken(ctx context.Context, subToken string) error
 	DeleteSessionByUserId(ctx context.Context, userID int64) error
+	GetRoleByUserId(ctx context.Context, userID int64) ([]int32, error)
 	GetSessionByRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (GetSessionByRefreshTokenUsedRow, error)
 	GetSessionBySubToken(ctx context.Context, subToken string) (GetSessionBySubTokenRow, error)
 	GetUserBaseByEmail(ctx context.Context, userEmail string) (UserBase, error)

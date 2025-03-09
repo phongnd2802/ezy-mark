@@ -14,13 +14,17 @@ func MapUserProfile(dbProfile db.GetUserProfileRow) *models.UserProfileRes {
 		userGender = nil
 	}
 
-	userBirthday := dbProfile.UserBirthday.Time.String()
 	return &models.UserProfileRes{
 		UserProfile: models.UserProfile{
 			UserNickname: dbProfile.UserNickname,
 			UserFullname: dbProfile.UserFullname.String,
 			UserMobile:   dbProfile.UserMobile.String,
-			UserBirthday: userBirthday,
+			UserBirthday: func () string {
+				if dbProfile.UserBirthday.Valid {
+					return dbProfile.UserBirthday.Time.String()
+				}
+				return ""
+			}(),
 			UserGender:   userGender,
 		},
 		UserAvatar: dbProfile.UserAvatar.String,

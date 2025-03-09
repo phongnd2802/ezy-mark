@@ -12,6 +12,7 @@ import (
 	"github.com/phongnd2802/ezy-mark/internal/cache"
 	"github.com/phongnd2802/ezy-mark/internal/consts"
 	"github.com/phongnd2802/ezy-mark/internal/db"
+	"github.com/phongnd2802/ezy-mark/internal/global"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/middlewares"
 	"github.com/phongnd2802/ezy-mark/internal/models"
@@ -71,10 +72,26 @@ func (s *authServiceImpl) Login(ctx context.Context, params *models.LoginRequest
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-	// Give profileUserJson and access_token to redis with key = subToken
-	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
+	// Get Role
+	roles, err := s.store.GetRoleByUserId(ctx, userFound.UserID)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	rolesJson, err := sonic.Marshal(roles)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
 
-	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
+	// Give profileUserJson and role to redis with key = subToken
+	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
+	
+	pipe := global.Rdb.Pipeline()
+	
+	pipe.SetEx(ctx, helpers.GetUserKeyProfile(subToken), profileUserJson, duration)
+	pipe.SetEx(ctx, helpers.GetUserKeyRole(subToken), rolesJson, duration)
+
+	_, err = pipe.Exec(ctx)
+	
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
@@ -366,10 +383,11 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, params *models.Refre
 	// Give profileUserJson and access_token to redis with key = subToken
 	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
 
-	err = s.cache.SetEx(ctx, subToken, profileUserJson, int64(duration.Seconds()))
+	err = s.cache.SetEx(ctx, helpers.GetUserKeyProfile(subToken), profileUserJson, int64(duration.Seconds()))
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}
+
 
 	// Generate AccessToken and RefreshToken
 	accessToken, err := token.CreateToken(subToken, consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)

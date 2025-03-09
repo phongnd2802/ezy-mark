@@ -21,10 +21,6 @@ func GetUserKeyOtp(key string) string {
 	return fmt.Sprintf("user:%s:otp", key)
 }
 
-func GetUserKeyProfile(key string) string {
-	return fmt.Sprintf("%s:profile", key)
-}
-
 func GetUserKeyToken(key string) string {
 	return fmt.Sprintf("%s:accesstoken", key)
 }
