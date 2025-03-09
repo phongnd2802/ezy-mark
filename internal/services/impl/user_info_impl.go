@@ -10,7 +10,6 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/phongnd2802/ezy-mark/internal/cache"
 	"github.com/phongnd2802/ezy-mark/internal/db"
-	"github.com/phongnd2802/ezy-mark/internal/global"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/mapper"
 	"github.com/phongnd2802/ezy-mark/internal/models"
@@ -44,7 +43,7 @@ func (s *sUserInfo) ChangePassword(ctx context.Context, params *models.ChangePas
 	if !crypto.VerifyPassword(params.OldPassword, userBase.UserPassword) {
 		return response.ErrCodeUnauthorized, errors.New("invalid old password")
 	}
-	
+
 	// New Password must to be different from the old one
 	if params.OldPassword == params.NewPassword {
 		return response.ErrCodeBadRequest, errors.New("new password must be different from the old one")
@@ -59,7 +58,7 @@ func (s *sUserInfo) ChangePassword(ctx context.Context, params *models.ChangePas
 	// Update Password
 	err = s.store.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 		UserPassword: hashedPassword,
-		UserID: params.UserId,
+		UserID:       params.UserId,
 	})
 	if err != nil {
 		return response.ErrCodeInternalServer, err
@@ -135,12 +134,18 @@ func (s *sUserInfo) UpdateUserProfile(ctx context.Context, params *models.Update
 	if params.UserAvatar != nil {
 		// Upload Avatar To MinIO
 		objectName := helpers.GenerateFileAvatarName(params.UserId, params.UserAvatar.Filename)
-		src, err := params.UserAvatar.Open()
-		if err != nil {
-			return response.ErrCodeInternalServer, nil, err
-		}
-		defer src.Close()
-		_, err = global.Minio.PutObject(ctx, BucketUserAvatar, objectName, src, params.UserAvatar.Size, minio.PutObjectOptions{
+		// src, err := params.UserAvatar.Open()
+		// if err != nil {
+		// 	return response.ErrCodeInternalServer, nil, err
+		// }
+		// defer src.Close()
+		// _, err = global.Minio.PutObject(ctx, BucketUserAvatar, objectName, src, params.UserAvatar.Size, minio.PutObjectOptions{
+		// 	ContentType: params.UserAvatar.Header.Get("Content-Type"),
+		// })
+		// if err != nil {
+		// 	return response.ErrCodeInternalServer, nil, err
+		// }
+		err := services.UploadService().UploadFile(ctx, BucketUserAvatar, objectName, params.UserAvatar, minio.PutObjectOptions{
 			ContentType: params.UserAvatar.Header.Get("Content-Type"),
 		})
 		if err != nil {
@@ -189,8 +194,8 @@ func (s *sUserInfo) UpdateUserProfile(ctx context.Context, params *models.Update
 
 func NewUserInfoImpl(store db.Store, cache cache.Cache, distributor worker.TaskDistributor) *sUserInfo {
 	return &sUserInfo{
-		store: store,
-		cache: cache,
+		store:       store,
+		cache:       cache,
 		distributor: distributor,
 	}
 }

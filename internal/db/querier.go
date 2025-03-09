@@ -12,13 +12,15 @@ import (
 
 type Querier interface {
 	CheckRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (int64, error)
+	CheckShopExist(ctx context.Context, arg CheckShopExistParams) (int64, error)
 	CheckUserBaseExists(ctx context.Context, userEmail string) (int64, error)
+	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
 	CreateUserBase(ctx context.Context, arg CreateUserBaseParams) (UserBase, error)
 	CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error)
 	CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error)
 	DeleteSessionBySubToken(ctx context.Context, subToken string) error
 	DeleteSessionByUserId(ctx context.Context, userID int64) error
-	GetRoleByUserId(ctx context.Context, userID int64) ([]int32, error)
+	GetRoleByUserId(ctx context.Context, userID int64) ([]string, error)
 	GetSessionByRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (GetSessionByRefreshTokenUsedRow, error)
 	GetSessionBySubToken(ctx context.Context, subToken string) (GetSessionBySubTokenRow, error)
 	GetUserBaseByEmail(ctx context.Context, userEmail string) (UserBase, error)

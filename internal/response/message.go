@@ -16,5 +16,8 @@ var msg = map[int]string{
 	ErrCodeTokenFlagged: "suspicious activity detected, please reauthenticate.",
 	ErrCodeInternalServer: "internal server error",
 	ErrCodeUnauthorized: "unauthorized",
+
+	// Shop Message
+	ErrCodeShopEmailAlreadyExists: "shop email already exists",
 }
 

@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/cache"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
@@ -18,8 +19,6 @@ func AuthenticationMiddleware() fiber.Handler {
 				Message: "unauthorized",
 			})
 		}
-		
-		
 
 		// validate jwt token by subject
 		claims, err := token.VerifyTokenSubject(jwtToken)
@@ -32,17 +31,18 @@ func AuthenticationMiddleware() fiber.Handler {
 
 		// Store user ID in request context
 		c.Locals("subjectUUID", claims.Subject)
-
+		log.Info("subjectUUID: ", claims.Subject)
 		// Store role in request context
-		var roles []int32
+		var roles []string
 		err = cache.GetCache(c.UserContext(), helpers.GetUserKeyRole(claims.Subject), &roles)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(response.Response{
 				Code:    500,
 				Message: "internal server error",
-				Data: err.Error(),
+				Data:    err.Error(),
 			})
 		}
+
 		c.Locals("roles", roles)
 		return c.Next()
 	}

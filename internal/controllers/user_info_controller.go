@@ -64,7 +64,7 @@ func (c *cUserInfo) ChangePassword(ctx *fiber.Ctx) error {
 func (c *cUserInfo) GetUserProfile(ctx *fiber.Ctx) error {
 	sUUID, _ := context.GetSubjectUUID(ctx)
 	userId, _ := context.GetUserIdFromUUID(ctx)
-	roles := ctx.Locals("roles").([]int32)
+	roles := ctx.Locals("roles").([]string)
 	log.Info().Msgf("Roles: %v", roles)
 	params := models.GetProfileParams{
 		UserId:   userId,

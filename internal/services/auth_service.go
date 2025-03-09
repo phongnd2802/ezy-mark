@@ -19,6 +19,9 @@ type IAuthService interface {
 
 	// Handle Refresh Token
 	RefreshToken(ctx context.Context, params *models.RefreshTokenParams) (code int, res *models.LoginResponse, err error)
+
+	// Handle Forgot Password
+	// TODO...
 }
 
 var localAuthService IAuthService

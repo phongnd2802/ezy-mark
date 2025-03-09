@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,6 +30,8 @@ import (
 // @host localhost:8000
 // @BasePath /api/v1
 func main() {
+	port := flag.String("port", "8000",  "Port to run the server on")
+	flag.Parse()
 	app := initialize.Run()
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
@@ -48,8 +52,8 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Info().Msg("Starting Fiber server on :8000")
-		if err := app.Listen("127.0.0.1:8000"); err != nil {
+		log.Info().Msgf("Starting Fiber server on :%s", *port)
+		if err := app.Listen(fmt.Sprintf("127.0.0.1:%s", *port)); err != nil {
 			log.Fatal().Err(err).Msg("Failed to start Fiber server")
 		}
 	} ()

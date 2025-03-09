@@ -82,13 +82,14 @@ type Shop struct {
 	OwnerID         int64              `json:"owner_id"`
 	ShopName        string             `json:"shop_name"`
 	ShopDescription pgtype.Text        `json:"shop_description"`
-	ShopLogo        pgtype.Text        `json:"shop_logo"`
+	ShopLogo        string             `json:"shop_logo"`
 	ShopPhone       pgtype.Text        `json:"shop_phone"`
 	ShopEmail       string             `json:"shop_email"`
-	ShopAddress     pgtype.Text        `json:"shop_address"`
-	BusinessLicense pgtype.Text        `json:"business_license"`
-	TaxID           pgtype.Text        `json:"tax_id"`
+	ShopAddress     string             `json:"shop_address"`
+	BusinessLicense string             `json:"business_license"`
+	TaxID           string             `json:"tax_id"`
 	IsActive        pgtype.Bool        `json:"is_active"`
+	IsBlocked       pgtype.Bool        `json:"is_blocked"`
 	IsVerified      pgtype.Bool        `json:"is_verified"`
 	VerifiedBy      pgtype.Int8        `json:"verified_by"`
 	VerifiedAt      pgtype.Timestamptz `json:"verified_at"`

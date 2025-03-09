@@ -236,6 +236,80 @@ paths:
       summary: User Verify OTP
       tags:
       - Authentication Management
+  /shop/register:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Allows users to register a new shop with the required information,
+        including shop name, shop logo, business license, and address.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Shop name
+        in: formData
+        name: shop_name
+        required: true
+        type: string
+      - description: Shop description
+        in: formData
+        name: shop_description
+        required: true
+        type: string
+      - description: Shop logo
+        in: formData
+        name: shop_logo
+        required: true
+        type: file
+      - description: Phone number
+        in: formData
+        name: shop_phone
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: shop_email
+        required: true
+        type: string
+      - description: Address
+        in: formData
+        name: shop_address
+        required: true
+        type: string
+      - description: Business license
+        in: formData
+        name: business_license
+        required: true
+        type: file
+      - description: Tax ID
+        in: formData
+        name: tax_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: Register a new shop
+      tags:
+      - Shop Management
   /user/change-password:
     patch:
       consumes:

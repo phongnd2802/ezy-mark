@@ -5,16 +5,17 @@ CREATE TABLE IF NOT EXISTS "shops" (
     "owner_id" bigint NOT NULL,
     "shop_name" varchar NOT NULL,
     "shop_description" text DEFAULT NULL,
-    "shop_logo" varchar DEFAULT NULL,
+    "shop_logo" varchar NOT NULL,
     "shop_phone" varchar DEFAULT NULL,
     "shop_email" varchar NOT NULL UNIQUE,
-    "shop_address" varchar DEFAULT NULL,
-    "business_license" varchar DEFAULT NULL,  -- Giấy phép kinh doanh
-    "tax_id" varchar DEFAULT NULL UNIQUE,    -- Mã số thuế 
-    "is_active" boolean DEFAULT true,
+    "shop_address" varchar NOT NULL,
+    "business_license" varchar NOT NULL,
+    "tax_id" varchar NOT NULL UNIQUE,    
+    "is_active" boolean DEFAULT false,
+    "is_blocked" boolean DEFAULT false,
     "is_verified" boolean DEFAULT false,
-    "verified_by" bigint DEFAULT NULL, -- Admin đã xác nhận
-    "verified_at" timestamptz DEFAULT NULL, -- Thời gian xác nhận
+    "verified_by" bigint DEFAULT NULL,
+    "verified_at" timestamptz DEFAULT NULL,
     "created_at" timestamptz NOT NULL DEFAULT (now()),
     "updated_at" timestamptz NOT NULL DEFAULT (now()),
     FOREIGN KEY ("owner_id") REFERENCES "user_base" ("user_id") ON DELETE CASCADE,

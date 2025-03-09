@@ -177,32 +177,6 @@ func (q *Queries) DeleteSessionByUserId(ctx context.Context, userID int64) error
 	return err
 }
 
-const getRoleByUserId = `-- name: GetRoleByUserId :many
-SELECT "role_id"
-FROM "user_roles"
-WHERE "user_id" = $1
-`
-
-func (q *Queries) GetRoleByUserId(ctx context.Context, userID int64) ([]int32, error) {
-	rows, err := q.db.Query(ctx, getRoleByUserId, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []int32{}
-	for rows.Next() {
-		var role_id int32
-		if err := rows.Scan(&role_id); err != nil {
-			return nil, err
-		}
-		items = append(items, role_id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getSessionByRefreshTokenUsed = `-- name: GetSessionByRefreshTokenUsed :one
 SELECT "session_id", "user_id", "refresh_token", "refresh_token_used"
 FROM "user_session"

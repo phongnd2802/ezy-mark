@@ -16,4 +16,7 @@ const (
 	ErrCodeTokenInvalid         = 41007
 	ErrCodeUnauthorized         = 41008
 	ErrCodeInternalServer       = 50000
+
+	// Shop Code
+	ErrCodeShopEmailAlreadyExists = 42000
 )

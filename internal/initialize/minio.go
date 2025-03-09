@@ -33,7 +33,7 @@ func initMinIO() {
 }
 
 func initBuckets() {
-	buckets := []string{consts.BucketUserAvatar}
+	buckets := []string{consts.BucketUserAvatar, consts.BucketShopLogo, consts.BucketShopBusinessLicense}
 
 	for _, bucket := range buckets {
 		exists, err := global.Minio.BucketExists(context.Background(), bucket)
