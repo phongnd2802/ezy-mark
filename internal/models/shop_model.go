@@ -23,3 +23,9 @@ type ShopDetailsRes struct {
 	ShopEmail       string `json:"shop_email"`
 	ShopAddress     string `json:"shop_address"`
 }
+
+type ApproveShopReq struct {
+	ShopId int64 `json:"shop_id"`
+	UserId int64
+}
+

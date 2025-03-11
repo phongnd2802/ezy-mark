@@ -26,4 +26,5 @@ func initServiceInterfaces() {
 	services.InitUploadService(impl.NewUploadServiceImpl())
 	services.InitUserInfo(impl.NewUserInfoImpl(store, cache, distributor))
 	services.InitShopUser(impl.NewShopUser(store))
+	services.InitShopAdmin(impl.NewShopAdminImpl(store))
 }

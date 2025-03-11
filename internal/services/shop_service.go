@@ -18,7 +18,7 @@ type (
 	}
 
 	IShopAdmin interface {
-		ApproveShop(ctx context.Context, shopId int64) (code int, err error)
+		ApproveShop(ctx context.Context, params *models.ApproveShopReq) (code int, err error)
 		GetAllShops(ctx context.Context) (code int, res []db.Shop, err error)
 		GetShopById(ctx context.Context, shopId int64) (code int, res db.Shop, err error)
 		BlockShop(ctx context.Context, shopId int64) (code int, err error)

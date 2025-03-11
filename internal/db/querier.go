@@ -11,8 +11,10 @@ import (
 )
 
 type Querier interface {
+	ApproveShop(ctx context.Context, arg ApproveShopParams) error
 	CheckRefreshTokenUsed(ctx context.Context, refreshTokenUsed pgtype.Text) (int64, error)
 	CheckShopExist(ctx context.Context, arg CheckShopExistParams) (int64, error)
+	CheckShopExistByAdmin(ctx context.Context, shopID int64) (int64, error)
 	CheckUserBaseExists(ctx context.Context, userEmail string) (int64, error)
 	CreateShop(ctx context.Context, arg CreateShopParams) (Shop, error)
 	CreateUserBase(ctx context.Context, arg CreateUserBaseParams) (UserBase, error)

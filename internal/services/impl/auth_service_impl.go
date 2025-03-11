@@ -327,7 +327,13 @@ func (s *authServiceImpl) Logout(ctx context.Context, subToken string) (int, err
 		return response.ErrCodeInternalServer, err
 	}
 
-	err = s.cache.Del(ctx, subToken)
+	remainingTime, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
+	pipe := global.Rdb.Pipeline()
+	
+	pipe.Del(ctx, helpers.GetUserKeyProfile(subToken), helpers.GetUserKeyRole(subToken))
+	pipe.SetEx(ctx, helpers.GetKeyBlackList(subToken), 1, remainingTime)
+	_, err = pipe.Exec(ctx)
+
 	if err != nil {
 		return response.ErrCodeInternalServer, err
 	}
@@ -380,10 +386,26 @@ func (s *authServiceImpl) RefreshToken(ctx context.Context, params *models.Refre
 		return response.ErrCodeInternalServer, nil, err
 	}
 
-	// Give profileUserJson and access_token to redis with key = subToken
-	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
+	// Get Role
+	roles, err := s.store.GetRoleByUserId(ctx, foundToken.UserID)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
+	rolesJson, err := sonic.Marshal(roles)
+	if err != nil {
+		return response.ErrCodeInternalServer, nil, err
+	}
 
-	err = s.cache.SetEx(ctx, helpers.GetUserKeyProfile(subToken), profileUserJson, int64(duration.Seconds()))
+	// Give profileUserJson and role to redis with key = subToken
+	duration, _ := time.ParseDuration(consts.JWT_ACCESS_TOKEN_EXPIRED_TIME)
+	
+	pipe := global.Rdb.Pipeline()
+	
+	pipe.SetEx(ctx, helpers.GetUserKeyProfile(subToken), profileUserJson, duration)
+	pipe.SetEx(ctx, helpers.GetUserKeyRole(subToken), rolesJson, duration)
+
+	_, err = pipe.Exec(ctx)
+	
 	if err != nil {
 		return response.ErrCodeInternalServer, nil, err
 	}

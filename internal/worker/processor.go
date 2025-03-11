@@ -15,6 +15,7 @@ const (
 
 type TaskProcessor interface {
 	Start() error
+	Shutdown()
 	ProcessTaskSendVerifyEmail(ctx context.Context, task *asynq.Task) error
 	ProcessTaskRemoveOldAvatar(ctx context.Context, task *asynq.Task) error
 }
@@ -31,6 +32,10 @@ func (processor *redisTaskProcessor) Start() error {
 	mux.HandleFunc(TaskSendVerifyEmail, processor.ProcessTaskSendVerifyEmail)
 	mux.HandleFunc(TaskRemoveOldAvatar, processor.ProcessTaskRemoveOldAvatar)
 	return processor.server.Start(mux)
+}
+
+func (processor *redisTaskProcessor) Shutdown() {
+	processor.server.Shutdown()
 }
 
 func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, sender email.EmailSender) TaskProcessor {

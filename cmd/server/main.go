@@ -60,7 +60,7 @@ func main() {
 	
 	<-quit
 	log.Info().Msg("Shutting down server...")
-
+	taskProcessor.Shutdown()
 	if err := app.Shutdown(); err != nil {
 		log.Error().Err(err).Msg("Error shutting down Fiber server")
 	}

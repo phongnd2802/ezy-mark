@@ -77,6 +77,19 @@ type RolePermission struct {
 	GrantedAt    time.Time `json:"granted_at"`
 }
 
+type SdProduct struct {
+	ProductID     int64     `json:"product_id"`
+	ProductName   string    `json:"product_name"`
+	ProductDesc   string    `json:"product_desc"`
+	ProductStatus bool      `json:"product_status"`
+	ProductAttrs  []byte    `json:"product_attrs"`
+	ProductShopID int64     `json:"product_shop_id"`
+	IsDeleted     bool      `json:"is_deleted"`
+	Sort          int32     `json:"sort"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
 type Shop struct {
 	ShopID          int64              `json:"shop_id"`
 	OwnerID         int64              `json:"owner_id"`
@@ -95,6 +108,45 @@ type Shop struct {
 	VerifiedAt      pgtype.Timestamptz `json:"verified_at"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
+}
+
+type Sku struct {
+	ID             int64          `json:"id"`
+	SkuNo          string         `json:"sku_no"`
+	SkuName        string         `json:"sku_name"`
+	SkuDescription pgtype.Text    `json:"sku_description"`
+	SkuType        int16          `json:"sku_type"`
+	Status         int16          `json:"status"`
+	Sort           int32          `json:"sort"`
+	SkuStock       int32          `json:"sku_stock"`
+	SkuPrice       pgtype.Numeric `json:"sku_price"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type SkuAttr struct {
+	ID        int64          `json:"id"`
+	SkuNo     string         `json:"sku_no"`
+	SkuStock  int32          `json:"sku_stock"`
+	SkuPrice  pgtype.Numeric `json:"sku_price"`
+	SkuAttrs  []byte         `json:"sku_attrs"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+}
+
+type SkuSpec struct {
+	ID       int64  `json:"id"`
+	SpuID    int64  `json:"spu_id"`
+	SpuSpecs []byte `json:"spu_specs"`
+}
+
+type SpuToSku struct {
+	ID        int64     `json:"id"`
+	SkuNo     string    `json:"sku_no"`
+	SpuID     int64     `json:"spu_id"`
+	IsDeleted bool      `json:"is_deleted"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type UserBase struct {

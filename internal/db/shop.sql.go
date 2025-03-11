@@ -11,6 +11,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const approveShop = `-- name: ApproveShop :exec
+UPDATE "shops"
+SET "is_verified" = true,
+    "verified_by" = $1,
+    "verified_at" = now()
+WHERE "shop_id" = $2
+`
+
+type ApproveShopParams struct {
+	VerifiedBy pgtype.Int8 `json:"verified_by"`
+	ShopID     int64       `json:"shop_id"`
+}
+
+func (q *Queries) ApproveShop(ctx context.Context, arg ApproveShopParams) error {
+	_, err := q.db.Exec(ctx, approveShop, arg.VerifiedBy, arg.ShopID)
+	return err
+}
+
 const checkShopExist = `-- name: CheckShopExist :one
 SELECT COUNT(*)
 FROM "shops"
@@ -24,6 +42,19 @@ type CheckShopExistParams struct {
 
 func (q *Queries) CheckShopExist(ctx context.Context, arg CheckShopExistParams) (int64, error) {
 	row := q.db.QueryRow(ctx, checkShopExist, arg.ShopEmail, arg.TaxID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const checkShopExistByAdmin = `-- name: CheckShopExistByAdmin :one
+SELECT COUNT(*)
+FROM "shops"
+WHERE "shop_id" = $1
+`
+
+func (q *Queries) CheckShopExistByAdmin(ctx context.Context, shopID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, checkShopExistByAdmin, shopID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

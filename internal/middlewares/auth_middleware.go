@@ -3,6 +3,7 @@ package middlewares
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/phongnd2802/ezy-mark/internal/global"
 	"github.com/phongnd2802/ezy-mark/internal/helpers"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/cache"
 	"github.com/phongnd2802/ezy-mark/internal/pkg/token"
@@ -28,6 +29,22 @@ func AuthenticationMiddleware() fiber.Handler {
 				Message: "invalid token",
 			})
 		}
+
+		// Check the blacklist
+		isTokenExistsBlackList, err := global.Rdb.Exists(c.UserContext(), helpers.GetKeyBlackList(claims.Subject)).Result()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(response.Response{
+                Code:    500,
+                Message: "internal server error",
+                Data:    err.Error(),
+            })
+		}
+		if isTokenExistsBlackList > 0 {
+            return c.Status(fiber.StatusUnauthorized).JSON(response.Response{
+                Code:    401,
+                Message: "token revoked",
+            })
+        }
 
 		// Store user ID in request context
 		c.Locals("subjectUUID", claims.Subject)

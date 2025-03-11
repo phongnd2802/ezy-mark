@@ -32,9 +32,15 @@ func initRouter() *fiber.App {
 	v1.Use(compress.New())
 	v1.Use(middlewares.RequestMetadataMiddleware())
 
+
 	userRouter := routes.RouterGroupApp.User
+	adminRouter := routes.RouterGroupApp.Admin
+
 	userRouter.InitAuthRoute(v1)
 	userRouter.InitUserRouter(v1)
 	userRouter.InitShopRouter(v1)
+
+
+	adminRouter.InitShopRouter(v1)
 	return app
 }

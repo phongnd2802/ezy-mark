@@ -17,3 +17,16 @@ INSERT INTO "shops" (
     "tax_id"
 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
 
+
+
+-- name: CheckShopExistByAdmin :one
+SELECT COUNT(*)
+FROM "shops"
+WHERE "shop_id" = $1;
+
+-- name: ApproveShop :exec
+UPDATE "shops"
+SET "is_verified" = true,
+    "verified_by" = $1,
+    "verified_at" = now()
+WHERE "shop_id" = $2;

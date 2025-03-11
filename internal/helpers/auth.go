@@ -24,3 +24,7 @@ func GetUserKeyOtp(key string) string {
 func GetUserKeyToken(key string) string {
 	return fmt.Sprintf("%s:accesstoken", key)
 }
+
+func GetKeyBlackList(key string) string {
+	return fmt.Sprintf("TOKEN-BLACK-LIST-%s", key)
+}

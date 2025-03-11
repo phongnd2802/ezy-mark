@@ -18,7 +18,7 @@ func loadConfig() {
 	if cfg.Mode == "development" {
 		log.Logger = log.Output(zerolog.ConsoleWriter{
 			Out: os.Stderr,
-		})
+		}).With().Caller().Logger()
 	}
 
 	log.Info().Msg("Loading config...")
